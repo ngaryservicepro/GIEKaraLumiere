@@ -66,6 +66,8 @@ export default function MembersView({
   const [joinDate, setJoinDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<Member['status']>('Actif');
   const [cniNumber, setCniNumber] = useState('');
+  const [profession, setProfession] = useState('');
+  const [educationLevel, setEducationLevel] = useState('');
   
   // CNI file temporary helper
   const [cniFile, setCniFile] = useState<Member['cniFile'] | undefined>(undefined);
@@ -142,6 +144,8 @@ export default function MembersView({
     setJoinDate(new Date().toISOString().split('T')[0]);
     setStatus('Actif');
     setCniNumber('');
+    setProfession('');
+    setEducationLevel('');
     setCniFile(undefined);
     setCniError(null);
     setCniSuccess(null);
@@ -178,7 +182,9 @@ export default function MembersView({
       joinDate,
       status,
       cniNumber,
-      cniFile
+      cniFile,
+      profession,
+      educationLevel
     };
 
     if (editingMember) {
@@ -208,6 +214,8 @@ export default function MembersView({
     setJoinDate(m.joinDate);
     setStatus(m.status);
     setCniNumber(m.cniNumber);
+    setProfession(m.profession || '');
+    setEducationLevel(m.educationLevel || '');
     setCniFile(m.cniFile);
     setShowAddForm(true);
   };
@@ -359,6 +367,28 @@ export default function MembersView({
                     rows={2}
                     placeholder="Ex: Avenue Cheikh Anta Diop, Dakar"
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Profession / Activité active</label>
+                    <input 
+                      type="text" 
+                      value={profession}
+                      onChange={(e) => setProfession(e.target.value)}
+                      className={inputClass}
+                      placeholder="Ex: Enseignant, Avocat, ..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Niveau d'études</label>
+                    <input 
+                      type="text" 
+                      value={educationLevel}
+                      onChange={(e) => setEducationLevel(e.target.value)}
+                      className={inputClass}
+                      placeholder="Ex: Baccalauréat, Licence, Master, ..."
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -596,6 +626,11 @@ export default function MembersView({
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-white">{m.fullName}</p>
                             <p className="text-xs text-gray-400">{m.phone || 'Aucun numéro'}</p>
+                            {(m.profession || m.educationLevel) && (
+                              <p className="text-[11px] text-[#22B8A7] font-medium mt-0.5">
+                                {[m.profession, m.educationLevel].filter(Boolean).join(' • ')}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -691,13 +726,84 @@ export default function MembersView({
               <X className="w-5 h-5" />
             </button>
             
-            <h3 className="text-base font-bold text-[#173C4A] dark:text-white mb-2 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#22B8A7]" />
-              Fichier CNI Sécurisé de {activeCniView.fullName}
+            <h3 className="text-lg font-bold text-[#173C4A] dark:text-white mb-1 flex items-center gap-2">
+              <User className="w-5 h-5 text-[#22B8A7]" />
+              Fiche Individuelle d'Adhérent
             </h3>
-            <p className="text-xs text-gray-400 mb-4">
-              Numéro de CNI : <strong className="font-mono text-gray-800 dark:text-white">{activeCniView.cniNumber}</strong>
+            <p className="text-xs text-gray-400 mb-4 font-semibold uppercase tracking-wider">
+              ID GIE : <span className="font-mono text-[#22B8A7] font-bold">{activeCniView.id}</span>
             </p>
+
+            {/* Information Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-gray-50 dark:bg-gray-850 p-4 rounded-xl border border-gray-150 dark:border-gray-800 text-xs mb-5">
+              <div>
+                <p className="text-gray-400 font-medium">Nom Complet</p>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">{activeCniView.fullName}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Sexe & Date de Naissance</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">
+                  {activeCniView.gender === 'M' ? 'Masculin' : 'Féminin'}
+                  {activeCniView.birthDate ? ` • ${new Date(activeCniView.birthDate).toLocaleDateString('fr-FR')}` : ''}
+                  {activeCniView.birthPlace ? ` (${activeCniView.birthPlace})` : ''}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium font-semibold text-[#1f9385]">Profession dans la vie active</p>
+                <p className="font-bold text-[#22B8A7] text-xs">{activeCniView.profession || 'Non renseignée'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium font-semibold text-[#1f9385]">Niveau d'études / Scolarité</p>
+                <p className="font-bold text-[#22B8A7] text-xs">{activeCniView.educationLevel || 'Non renseigné'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Téléphone & E-mail</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">{activeCniView.phone || 'Non disponible'}</p>
+                <p className="text-[11px] text-gray-400">{activeCniView.email || 'Pas d\'email rattaché'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Club & Ligue de rattachement</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">
+                  {clubs.find(c => c.id === activeCniView.clubId)?.name || 'Sans club rattaché'}
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  {leagues.find(l => l.id === activeCniView.leagueId)?.name || 'Sans ligue affiliée'}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-gray-400 font-medium">Adresse de Domicile</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">{activeCniView.address || 'Non spécifiée'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Grade & Fonction administrative</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">{activeCniView.grade || 'Aucun grade'} • {activeCniView.function || 'Rôle Standard'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Date d'intégration & Statut</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">
+                    {activeCniView.joinDate ? new Date(activeCniView.joinDate).toLocaleDateString('fr-FR') : 'Non fournie'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    activeCniView.status === 'Actif' ? 'bg-emerald-150 text-emerald-850' : 
+                    activeCniView.status === 'Inactif' ? 'bg-gray-150 text-gray-850' : 
+                    'bg-red-150 text-red-850'
+                  }`}>
+                    {activeCniView.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-1.5 border-t border-gray-100 dark:border-gray-800 pt-3">
+                <FileText className="w-3.5 h-3.5 text-[#22B8A7]" />
+                Justificatif CNI du Membre
+              </h4>
+              <p className="text-xs text-gray-400">
+                Numéro Unique CNI : <strong className="font-mono text-gray-800 dark:text-white">{activeCniView.cniNumber}</strong>
+              </p>
+            </div>
 
             {/* Simulated file viewer */}
             <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 flex flex-col items-center justify-center min-h-[300px]">

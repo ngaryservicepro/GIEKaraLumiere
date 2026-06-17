@@ -30,6 +30,8 @@ export interface Member {
   joinDate: string;
   status: 'Actif' | 'Inactif' | 'Suspendu';
   cniNumber: string; // Unique CNI number
+  profession?: string; // Everyday life occupation
+  educationLevel?: string; // Level of study / education level
   cniFile?: {
     name: string;
     size: string;
