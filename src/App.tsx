@@ -35,6 +35,7 @@ import DocumentsView from './components/DocumentsView';
 import HumanResourcesView from './components/HumanResourcesView';
 import AlertsView from './components/AlertsView';
 import SecurityView from './components/SecurityView';
+import gieLogo from './assets/images/gie_logo_1781655966296.jpg';
 
 export default function App() {
   
@@ -577,10 +578,10 @@ export default function App() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-[#22B8A7] shadow-sm overflow-hidden">
             <img 
-              src="/src/assets/images/gie_logo_1781655966296.jpg" 
-              alt="Logo GIE Kara Lumière" 
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
+               src={gieLogo} 
+               alt="Logo GIE Kara Lumière" 
+               className="w-full h-full object-cover"
+               referrerPolicy="no-referrer"
             />
           </div>
           <h2 className="font-display font-extrabold text-[13px] tracking-wider uppercase text-white">GIE Kara Lumière</h2>

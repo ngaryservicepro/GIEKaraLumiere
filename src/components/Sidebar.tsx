@@ -25,6 +25,7 @@ import {
   Menu
 } from 'lucide-react';
 import { UserRole } from '../types';
+import gieLogo from '../assets/images/gie_logo_1781655966296.jpg';
 
 interface SidebarProps {
   activeTab: string;
@@ -74,10 +75,10 @@ export default function Sidebar({
         <div className="p-6 border-b border-[#22B8A7]/10 flex flex-col items-center text-center space-y-2 bg-[#0e252e]">
           <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center border border-[#22B8A7] shadow-[0_0_15px_rgba(34,184,167,0.3)] mb-1 transition-transform hover:scale-105 duration-300 overflow-hidden">
             <img 
-              src="/src/assets/images/gie_logo_1781655966296.jpg" 
-              alt="Logo GIE Kara Lumière" 
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
+               src={gieLogo} 
+               alt="Logo GIE Kara Lumière" 
+               className="w-full h-full object-cover"
+               referrerPolicy="no-referrer"
             />
           </div>
           <div>
