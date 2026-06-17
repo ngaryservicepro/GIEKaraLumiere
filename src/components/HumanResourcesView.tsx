@@ -146,7 +146,7 @@ export default function HumanResourcesView({
         <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
           <p className="font-bold uppercase text-[#22B8A7]">ℹ️ Information Statutaire du GIE</p>
           <p>
-            Conformément aux statuts enregistrés du <strong className="text-white">GIE 221 Lumière</strong>, le groupement est constitué de membres rattachés et ne dispose pas de salariés permanents sous contrat de travail standard. Le pilotage opérationnel s'appuie exclusivement sur des <strong>bénévoles</strong>, des <strong>collaborateurs partenaires (Mise à disposition)</strong> et des <strong>prestataires de services externes</strong> facturant des honoraires.
+            Conformément aux statuts enregistrés du <strong className="text-white">GIE Kara Lumière</strong>, le groupement est constitué de membres rattachés et ne dispose pas de salariés permanents sous contrat de travail standard. Le pilotage opérationnel s'appuie exclusivement sur des <strong>bénévoles</strong>, des <strong>collaborateurs partenaires (Mise à disposition)</strong> et des <strong>prestataires de services externes</strong> facturant des honoraires.
           </p>
         </div>
       </div>
@@ -361,7 +361,7 @@ export default function HumanResourcesView({
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-amber-700" />
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                    Générateur GIE 221
+                    Générateur GIE Kara
                   </span>
                 </div>
                 <button 
@@ -378,7 +378,7 @@ export default function HumanResourcesView({
               </div>
 
               <p className="text-[9px] text-amber-700 italic">
-                Ce document respecte les directives relatives à la gestion financière sans salariat du GIE 221 Lumière.
+                Ce document respecte les directives relatives à la gestion financière sans salariat du GIE Kara Lumière.
               </p>
 
               {/* PDF Print simulation */}

@@ -92,7 +92,7 @@ export default function ClubsView({
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(headers + rows);
     const link = document.createElement("a");
     link.setAttribute("href", csvContent);
-    link.setAttribute("download", `GIE_221_Lumiere_Clubs_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `GIE_Kara_Lumiere_Clubs_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -114,7 +114,7 @@ export default function ClubsView({
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Clubs Affiliés</h1>
           <p className={`text-sm ${textClass}`}>
-            Gérer les différents clubs et associations sportives ou artistiques rattachés au GIE 221 Lumière.
+            Gérer les différents clubs et associations sportives ou artistiques rattachés au GIE Kara Lumière.
           </p>
         </div>
         <div className="flex gap-2">

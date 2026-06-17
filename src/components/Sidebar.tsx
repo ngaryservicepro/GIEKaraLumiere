@@ -75,13 +75,13 @@ export default function Sidebar({
           <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center border border-[#22B8A7] shadow-[0_0_15px_rgba(34,184,167,0.3)] mb-1 transition-transform hover:scale-105 duration-300 overflow-hidden">
             <img 
               src="/src/assets/images/gie_logo_1781655966296.jpg" 
-              alt="Logo GIE 221 Lumière" 
+              alt="Logo GIE Kara Lumière" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
           <div>
-            <h2 className="font-display font-extrabold text-xs tracking-wider uppercase text-white">GIE 221 Lumière</h2>
+            <h2 className="font-display font-extrabold text-xs tracking-wider uppercase text-white">GIE Kara Lumière</h2>
             <p className="text-[9px] text-[#22B8A7] font-semibold tracking-widest font-mono mt-0.5">PORTAIL DE GESTION</p>
           </div>
         </div>

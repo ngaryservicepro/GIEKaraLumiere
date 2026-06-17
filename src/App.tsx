@@ -16,7 +16,9 @@ import {
   Employee, 
   ArchivalDocument, 
   IntelligentAlert,
-  UserRole
+  UserRole,
+  AccessAccount,
+  AuditLog
 } from './types';
 import Sidebar from './components/Sidebar';
 import DashboardView from './components/DashboardView';
@@ -102,6 +104,30 @@ export default function App() {
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>(() => {
     const saved = localStorage.getItem('kl_user_role');
     return (saved as UserRole) || 'Super Administrateur';
+  });
+
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>(() => {
+    return localStorage.getItem('kl_user_email') || 'ngaryservicepro@gmail.com';
+  });
+
+  const [accessAccounts, setAccessAccounts] = useState<AccessAccount[]>(() => {
+    const saved = localStorage.getItem('kl_access_accounts');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 'ACC-001', fullName: "Ngary Sow", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
+      { id: 'ACC-002', fullName: "Souleymane Faye", email: "president@karalumiere.sn", role: "Président", password: "pres", status: "Actif" },
+      { id: 'ACC-003', fullName: "Babacar Ndiaye", email: "sg@karalumiere.sn", role: "Secrétaire Général", password: "sg", status: "Actif" },
+      { id: 'ACC-004', fullName: "Fatou Diome", email: "musique@karalumiere.sn", role: "Responsable Musicale", password: "musique", status: "Actif" },
+      { id: 'ACC-005', fullName: "Seynabou Ndiaye", email: "seynabou@karalumiere.sn", role: "Membre", password: "membre", status: "Actif" }
+    ];
+  });
+
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
+    const saved = localStorage.getItem('kl_audit_logs');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 'LOG-001', timestamp: new Date().toISOString(), userEmail: 'ngaryservicepro@gmail.com', userRole: 'Super Administrateur', action: 'Initialisation Système', details: 'Démarrage initial du portail d\'administration GIE Kara Lumière', status: 'Succès' }
+    ];
   });
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -198,6 +224,18 @@ export default function App() {
     localStorage.setItem('kl_manual_liquidity', String(manualLiquidity));
   }, [manualLiquidity]);
 
+  useEffect(() => {
+    localStorage.setItem('kl_user_email', currentUserEmail);
+  }, [currentUserEmail]);
+
+  useEffect(() => {
+    localStorage.setItem('kl_access_accounts', JSON.stringify(accessAccounts));
+  }, [accessAccounts]);
+
+  useEffect(() => {
+    localStorage.setItem('kl_audit_logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
+
   // BULK DATABASE BACKUP COMPACTION & RESTORE HANDLER
   const handleRestoreDatabase = (data: any) => {
     if (!data) return;
@@ -212,6 +250,8 @@ export default function App() {
     if (Array.isArray(data.employees)) setEmployees(data.employees);
     if (Array.isArray(data.documents)) setDocuments(data.documents);
     if (Array.isArray(data.alerts)) setAlerts(data.alerts);
+    if (Array.isArray(data.accessAccounts)) setAccessAccounts(data.accessAccounts);
+    if (Array.isArray(data.auditLogs)) setAuditLogs(data.auditLogs);
     
     if (typeof data.initialLiquidity === 'number') setInitialLiquidity(data.initialLiquidity);
     if (typeof data.useManualLiquidity === 'boolean') setUseManualLiquidity(data.useManualLiquidity);
@@ -227,129 +267,186 @@ export default function App() {
   const computedBalance = initialLiquidity + totalInboundContributions + totalJournalCreditsRevenues - totalOutboundBudgets - totalJournalDebitsExpenses;
   const treasuryBalance = useManualLiquidity ? manualLiquidity : computedBalance;
 
+  const logAction = (action: string, details: string, status: 'Succès' | 'Échec' = 'Succès') => {
+    const newLog: AuditLog = {
+      id: 'LOG-' + Math.floor(100000 + Math.random() * 900000),
+      timestamp: new Date().toISOString(),
+      userEmail: currentUserEmail,
+      userRole: currentUserRole,
+      action,
+      details,
+      status
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+  };
+
   // SYSTEM MUTATOR HANDLERS
   const addMember = (mData: Omit<Member, 'id'>) => {
     const nextId = 'MEM-' + String(members.length + 1).padStart(3, '0');
     setMembers([...members, { id: nextId, ...mData }]);
+    logAction("Enregistrement Adhérent", `Création du membre de club "${mData.fullName}" sous l'identifiant ${nextId}.`);
   };
 
   const updateMember = (id: string, mData: Partial<Member>) => {
     setMembers(members.map(m => m.id === id ? { ...m, ...mData } : m));
+    const mName = members.find(m => m.id === id)?.fullName || id;
+    logAction("Modification Adhérent", `Mise à jour des coordonnées administratives de "${mName}".`);
   };
 
   const deleteMember = (id: string) => {
+    const mName = members.find(m => m.id === id)?.fullName || id;
     setMembers(members.filter(m => m.id !== id));
+    logAction("Suppression Adhérent", `Retrait définitif de "${mName}" de la base de données.`);
   };
 
   const addClub = (cData: Omit<Club, 'id'>) => {
     const id = 'CLUB-' + Math.floor(100 + Math.random() * 900);
     setClubs([...clubs, { id, ...cData }]);
+    logAction("Affiliation Club", `Ajout du club ou association "${cData.name}" au GIE.`);
   };
 
   const updateClub = (id: string, cData: Partial<Club>) => {
     setClubs(clubs.map(c => c.id === id ? { ...c, ...cData } : c));
+    const cName = clubs.find(c => c.id === id)?.name || id;
+    logAction("Modification Club", `Fiche du club "${cName}" mise à jour.`);
   };
 
   const deleteClub = (id: string) => {
+    const cName = clubs.find(c => c.id === id)?.name || id;
     setClubs(clubs.filter(c => c.id !== id));
+    logAction("Désaffiliation Club", `Retrait définitif du club "${cName}".`);
   };
 
   const addLeague = (lData: Omit<League, 'id'>) => {
     const id = 'LIG-' + Math.floor(100 + Math.random() * 900);
     setLeagues([...leagues, { id, ...lData }]);
+    logAction("Affiliation Ligue", `Création de la ligue régionale "${lData.name}" (${lData.region}).`);
   };
 
   const updateLeague = (id: string, lData: Partial<League>) => {
     setLeagues(leagues.map(l => l.id === id ? { ...l, ...lData } : l));
+    const lName = leagues.find(l => l.id === id)?.name || id;
+    logAction("Modification Ligue", `Mise à jour pour la ligue "${lName}".`);
   };
 
   const deleteLeague = (id: string) => {
+    const lName = leagues.find(l => l.id === id)?.name || id;
     setLeagues(leagues.filter(l => l.id !== id));
+    logAction("Suppression Ligue", `Retrait de la ligue "${lName}".`);
   };
 
   const addPosition = (pData: Omit<ExecutivePosition, 'id' | 'isDefault'>) => {
     const id = 'POS-' + (positions.length + 1);
     setPositions([...positions, { id, isDefault: false, ...pData }]);
+    logAction("Création de Poste", `Ajout d'un mandat honorifique "${pData.title}" attribué à "${pData.holderName}".`);
   };
 
   const updatePosition = (id: string, pData: Partial<ExecutivePosition>) => {
     setPositions(positions.map(p => p.id === id ? { ...p, ...pData } : p));
+    const title = positions.find(p => p.id === id)?.title || id;
+    logAction("Modification Mandat", `Mise à jour pour le rôle exécutif de "${title}".`);
   };
 
   const deletePosition = (id: string) => {
+    const title = positions.find(p => p.id === id)?.title || id;
     setPositions(positions.filter(p => p.id !== id));
+    logAction("Suppression Mandat", `Retrait du poste de membre du bureau: "${title}".`);
   };
 
   const addMeeting = (meet: Omit<Meeting, 'id'>) => {
     const id = 'AGO-' + Math.floor(1000 + Math.random() * 9000);
     setMeetings([{ id, ...meet }, ...meetings]);
+    logAction("Planification Réunion", `Création de la séance de travail / PV "${meet.title}" prévue pour le ${meet.date}.`);
   };
 
   const updateMeeting = (id: string, meet: Partial<Meeting>) => {
     setMeetings(meetings.map(m => m.id === id ? { ...m, ...meet } as Meeting : m));
+    const mTitle = meetings.find(m => m.id === id)?.title || id;
+    logAction("Mise à jour Réunion / Signature PV", `Modifications / Enregistrement des signatures pour la réunion "${mTitle}".`);
   };
 
   const deleteMeeting = (id: string) => {
+    const mTitle = meetings.find(m => m.id === id)?.title || id;
     setMeetings(meetings.filter(m => m.id !== id));
+    logAction("Suppression Réunion", `Retrait de la réunion "${mTitle}".`);
   };
 
   const addActivity = (act: Omit<Activity, 'id'>) => {
     const id = 'ACT-' + Math.floor(1000 + Math.random() * 9000);
     setActivities([{ id, ...act }, ...activities]);
+    logAction("Création d'Activité", `Programmation de l'activité "${act.name}" dotée d'un budget de ${act.budget.toLocaleString()} FCFA.`);
   };
 
   const updateActivity = (id: string, act: Partial<Activity>) => {
     setActivities(activities.map(a => a.id === id ? { ...a, ...act } as Activity : a));
+    const aName = activities.find(a => a.id === id)?.name || id;
+    logAction("Modification d'Activité", `Mise à jour de l'activité "${aName}".`);
   };
 
   const deleteActivity = (id: string) => {
+    const aName = activities.find(a => a.id === id)?.name || id;
     setActivities(activities.filter(a => a.id !== id));
+    logAction("Suppression d'Activité", `Retrait de l'activité "${aName}".`);
   };
 
   const addContribution = (contrib: Omit<Contribution, 'id'>) => {
     const id = 'TX-' + Math.floor(100000 + Math.random() * 900000);
     setContributions([{ id, ...contrib }, ...contributions]);
 
+    const memName = members.find(m => m.id === contrib.memberId)?.fullName || 'Adhérent';
     // Push corresponding smart accounting double entry automatically for transparency!
     addJournalEntry({
       date: contrib.date,
       ref: contrib.reference,
-      label: `Cotisation reçue de ${members.find(m => m.id === contrib.memberId)?.fullName || 'Adhérent'}`,
+      label: `Cotisation reçue de ${memName}`,
       accountCode: '7616', // products/revenues
       type: 'Crédit',
       amount: contrib.amount
     });
+    logAction("Perception Cotisation", `Paiement de ${contrib.amount.toLocaleString()} FCFA reçu de "${memName}" par ${contrib.paymentMethod} (Réf: ${contrib.reference}).`);
   };
 
   const deleteContribution = (id: string) => {
+    const cObj = contributions.find(c => c.id === id);
+    const amountStr = cObj ? `${cObj.amount.toLocaleString()} FCFA` : '';
     setContributions(contributions.filter(c => c.id !== id));
+    logAction("Annulation Cotisation", `Suppression du reçu de cotisation ID: ${id} (${amountStr}).`);
   };
 
   const addJournalEntry = (je: Omit<JournalEntry, 'id'>) => {
     const id = 'JE-' + Math.floor(10000 + Math.random() * 90000);
     setJournalEntries([{ id, ...je }, ...journalEntries]);
+    logAction("Saisie Comptable", `Nouvel enregistrement comptable [${je.type} - Compte ${je.accountCode}]: "${je.label}" d'un montant de ${je.amount.toLocaleString()} FCFA.`);
   };
 
   const deleteJournalEntry = (id: string) => {
+    const jeName = journalEntries.find(je => je.id === id)?.label || id;
     setJournalEntries(journalEntries.filter(je => je.id !== id));
+    logAction("Annulation Comptable", `Retrait de l'écriture comptable : "${jeName}".`);
   };
 
   const addEmployee = (emp: Omit<Employee, 'id'>) => {
     const id = 'EMP-' + String(employees.length + 1).padStart(3, '0');
     setEmployees([...employees, { id, ...emp }]);
+    logAction("Enregistrement Collaborateur", `Création de la fiche de collaboration administrative pour "${emp.fullName}" (${emp.contractType}).`);
   };
 
   const deleteEmployee = (id: string) => {
+    const empName = employees.find(e => e.id === id)?.fullName || id;
     setEmployees(employees.filter(emp => emp.id !== id));
+    logAction("Retrait Collaborateur", `Suppression de la fiche de collaboration de "${empName}".`);
   };
 
   const addDocument = (doc: Omit<ArchivalDocument, 'id'>) => {
     const id = 'DOC-' + Math.floor(1000 + Math.random() * 9000);
     setDocuments([{ id, ...doc }, ...documents]);
+    logAction("Archivage Document", `Dépôt sécurisé du document "${doc.name}" dans la section coffre-fort.`);
   };
 
   const deleteDocument = (id: string) => {
+    const docName = documents.find(d => d.id === id)?.name || id;
     setDocuments(documents.filter(doc => doc.id !== id));
+    logAction("Destruction Archives", `Révocation et suppression définitive de l'archive "${docName}".`);
   };
 
   // Mark status alerts
@@ -481,12 +578,12 @@ export default function App() {
           <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-[#22B8A7] shadow-sm overflow-hidden">
             <img 
               src="/src/assets/images/gie_logo_1781655966296.jpg" 
-              alt="Logo GIE 221 Lumière" 
+              alt="Logo GIE Kara Lumière" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
-          <h2 className="font-display font-extrabold text-[13px] tracking-wider uppercase text-white">GIE 221 Lumière</h2>
+          <h2 className="font-display font-extrabold text-[13px] tracking-wider uppercase text-white">GIE Kara Lumière</h2>
         </div>
         
         <button 
@@ -695,11 +792,18 @@ export default function App() {
           <SecurityView 
             currentUserRole={currentUserRole} 
             setCurrentUserRole={setCurrentUserRole}
+            currentUserEmail={currentUserEmail}
+            setCurrentUserEmail={setCurrentUserEmail}
+            accessAccounts={accessAccounts}
+            setAccessAccounts={setAccessAccounts}
+            auditLogs={auditLogs}
+            setAuditLogs={setAuditLogs}
+            logAction={logAction}
             isDarkMode={isDarkMode}
             onSeedDemoData={handleSeedDemoData}
             onClearDemoData={handleClearDemoData}
             onRestoreDatabase={handleRestoreDatabase}
-            databaseBackup={{ members, clubs, leagues, positions, meetings, activities, contributions, journalEntries, employees, documents, alerts, initialLiquidity, useManualLiquidity, manualLiquidity }}
+            databaseBackup={{ members, clubs, leagues, positions, meetings, activities, contributions, journalEntries, employees, documents, alerts, initialLiquidity, useManualLiquidity, manualLiquidity, accessAccounts, auditLogs }}
             databaseStats={{
               membersCount: members.length,
               clubsCount: clubs.length,

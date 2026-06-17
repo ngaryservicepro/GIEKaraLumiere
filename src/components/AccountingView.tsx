@@ -617,7 +617,7 @@ export default function AccountingView({
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-900/40 p-4 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2 max-w-2xl">
             <span>ℹ️</span>
             <p>
-              Le Bilan Actif/Passif présente la photographie patrimoniale du GIE 221 Lumière. Il calcule les apports réels et charges à répartir face aux avances de trésorerie consolidables pour équilibrer la comptabilité.
+              Le Bilan Actif/Passif présente la photographie patrimoniale du GIE Kara Lumière. Il calcule les apports réels et charges à répartir face aux avances de trésorerie consolidables pour équilibrer la comptabilité.
             </p>
           </div>
 

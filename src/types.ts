@@ -178,3 +178,23 @@ export interface IntelligentAlert {
   date: string;
   isRead: boolean;
 }
+
+export interface AccessAccount {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  password?: string;
+  status: 'Actif' | 'Inactif';
+  lastLogin?: string;
+}
+
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  userEmail: string;
+  userRole: UserRole;
+  action: string;
+  details: string;
+  status: 'Succès' | 'Échec';
+}

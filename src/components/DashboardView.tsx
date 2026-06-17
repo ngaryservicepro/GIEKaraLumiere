@@ -187,7 +187,7 @@ export default function DashboardView({
             <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Tableau de Bord</h1>
           </div>
           <p className={`text-sm ${textClass}`}>
-            Bienvenue sur la console d'administration du <strong className="text-[#22B8A7]">GIE 221 Lumière</strong>.
+            Bienvenue sur la console d'administration du <strong className="text-[#22B8A7]">GIE Kara Lumière</strong>.
           </p>
         </div>
         
