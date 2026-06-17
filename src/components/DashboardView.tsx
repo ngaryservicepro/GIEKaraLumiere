@@ -38,6 +38,7 @@ import {
 import { Member, Club, League, Meeting, Activity, Contribution } from '../types';
 import { exportDashboardToPdf } from '../utils/pdfHelper';
 import PdfImportModal from './PdfImportModal';
+import TreasuryAdjustmentModal from './TreasuryAdjustmentModal';
 
 interface DashboardViewProps {
   members: Member[];
@@ -52,6 +53,13 @@ interface DashboardViewProps {
   setSelectedMeeting: (meeting: Meeting | null) => void;
   alerts?: any[];
   setAlerts?: React.Dispatch<React.SetStateAction<any[]>>;
+  initialLiquidity: number;
+  setInitialLiquidity: (val: number) => void;
+  useManualLiquidity: boolean;
+  setUseManualLiquidity: (val: boolean) => void;
+  manualLiquidity: number;
+  setManualLiquidity: (val: number) => void;
+  computedBalance: number;
 }
 
 export default function DashboardView({
@@ -66,10 +74,18 @@ export default function DashboardView({
   onNavigate,
   setSelectedMeeting,
   alerts = [],
-  setAlerts
+  setAlerts,
+  initialLiquidity,
+  setInitialLiquidity,
+  useManualLiquidity,
+  setUseManualLiquidity,
+  manualLiquidity,
+  setManualLiquidity,
+  computedBalance,
 }: DashboardViewProps) {
   
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isTreasuryModalOpen, setIsTreasuryModalOpen] = useState(false);
   
   // Dynamic metrics
   const totalMembers = members.length;
@@ -326,19 +342,29 @@ export default function DashboardView({
         </div>
 
         {/* KPI 7 : Treasury Balance */}
-        <div className={`p-4 rounded-xl border ${cardBgClass} shadow-xs flex items-center justify-between transition-transform hover:-translate-y-0.5`}>
+        <div 
+          onClick={() => setIsTreasuryModalOpen(true)}
+          className={`p-4 rounded-xl border ${cardBgClass} shadow-xs flex items-center justify-between transition-transform hover:-translate-y-0.5 cursor-pointer relative group`}
+          title="Cliquez pour ajuster le Solde Initial ou saisir le solde réel"
+          id="kpi-treasury-balance"
+        >
           <div>
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest dark:text-gray-400">
-              💵 Solde Trésorerie
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest dark:text-gray-400">
+                💵 Solde Trésorerie
+              </span>
+              <span className="text-[10px] text-[#22B8A7] opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                (Modifier)
+              </span>
+            </div>
             <div className="text-xl font-bold text-[#173C4A] dark:text-[#22B8A7] mt-1">
               {formatCurrency(treasuryBalance)}
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Fonds de réserve réels
+              {useManualLiquidity ? 'Solde Forcé (Manuel)' : 'Calculé en Temps Réel'}
             </p>
           </div>
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-500 rounded-lg">
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-500 rounded-lg group-hover:bg-[#22B8A7]/10 group-hover:text-[#22B8A7] transition-all">
             <Wallet className="w-6 h-6" />
           </div>
         </div>
@@ -603,6 +629,18 @@ export default function DashboardView({
             setAlerts(prev => [{ id: nextId, isRead: false, ...alertData }, ...prev]);
           }
         }} 
+      />
+
+      <TreasuryAdjustmentModal
+        isOpen={isTreasuryModalOpen}
+        onClose={() => setIsTreasuryModalOpen(false)}
+        initialLiquidity={initialLiquidity}
+        setInitialLiquidity={setInitialLiquidity}
+        useManualLiquidity={useManualLiquidity}
+        setUseManualLiquidity={setUseManualLiquidity}
+        manualLiquidity={manualLiquidity}
+        setManualLiquidity={setManualLiquidity}
+        computedBalance={computedBalance}
       />
     </div>
   );

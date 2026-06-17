@@ -112,6 +112,21 @@ export default function App() {
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
+  // New Treasury Settings States
+  const [initialLiquidity, setInitialLiquidity] = useState<number>(() => {
+    const saved = localStorage.getItem('kl_initial_liquidity');
+    return saved ? Number(saved) : 2500000;
+  });
+
+  const [useManualLiquidity, setUseManualLiquidity] = useState<boolean>(() => {
+    return localStorage.getItem('kl_use_manual_liquidity') === 'true';
+  });
+
+  const [manualLiquidity, setManualLiquidity] = useState<number>(() => {
+    const saved = localStorage.getItem('kl_manual_liquidity');
+    return saved ? Number(saved) : 2500000;
+  });
+
   // STORAGE WRITERS
   useEffect(() => {
     localStorage.setItem('kl_members', JSON.stringify(members));
@@ -171,14 +186,46 @@ export default function App() {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    localStorage.setItem('kl_initial_liquidity', String(initialLiquidity));
+  }, [initialLiquidity]);
+
+  useEffect(() => {
+    localStorage.setItem('kl_use_manual_liquidity', String(useManualLiquidity));
+  }, [useManualLiquidity]);
+
+  useEffect(() => {
+    localStorage.setItem('kl_manual_liquidity', String(manualLiquidity));
+  }, [manualLiquidity]);
+
+  // BULK DATABASE BACKUP COMPACTION & RESTORE HANDLER
+  const handleRestoreDatabase = (data: any) => {
+    if (!data) return;
+    if (Array.isArray(data.members)) setMembers(data.members);
+    if (Array.isArray(data.clubs)) setClubs(data.clubs);
+    if (Array.isArray(data.leagues)) setLeagues(data.leagues);
+    if (Array.isArray(data.positions)) setPositions(data.positions);
+    if (Array.isArray(data.meetings)) setMeetings(data.meetings);
+    if (Array.isArray(data.activities)) setActivities(data.activities);
+    if (Array.isArray(data.contributions)) setContributions(data.contributions);
+    if (Array.isArray(data.journalEntries)) setJournalEntries(data.journalEntries);
+    if (Array.isArray(data.employees)) setEmployees(data.employees);
+    if (Array.isArray(data.documents)) setDocuments(data.documents);
+    if (Array.isArray(data.alerts)) setAlerts(data.alerts);
+    
+    if (typeof data.initialLiquidity === 'number') setInitialLiquidity(data.initialLiquidity);
+    if (typeof data.useManualLiquidity === 'boolean') setUseManualLiquidity(data.useManualLiquidity);
+    if (typeof data.manualLiquidity === 'number') setManualLiquidity(data.manualLiquidity);
+  };
+
   // TREASURY DYNAMIC CALCULATION METHOD
-  const initialLiquidity = 2500000; // Base GIE starting apports
   const totalInboundContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
   const totalOutboundBudgets = activities.filter(a => a.status === 'Terminée' || a.status === 'En cours').reduce((sum, a) => sum + a.budget, 0);
   const totalJournalDebitsExpenses = journalEntries.filter(je => je.type === 'Débit').reduce((sum, je) => sum + je.amount, 0);
   const totalJournalCreditsRevenues = journalEntries.filter(je => je.type === 'Crédit').reduce((sum, je) => sum + je.amount, 0);
   
-  const treasuryBalance = initialLiquidity + totalInboundContributions + totalJournalCreditsRevenues - totalOutboundBudgets - totalJournalDebitsExpenses;
+  const computedBalance = initialLiquidity + totalInboundContributions + totalJournalCreditsRevenues - totalOutboundBudgets - totalJournalDebitsExpenses;
+  const treasuryBalance = useManualLiquidity ? manualLiquidity : computedBalance;
 
   // SYSTEM MUTATOR HANDLERS
   const addMember = (mData: Omit<Member, 'id'>) => {
@@ -490,6 +537,13 @@ export default function App() {
             setSelectedMeeting={setSelectedMeeting}
             alerts={alerts}
             setAlerts={setAlerts}
+            initialLiquidity={initialLiquidity}
+            setInitialLiquidity={setInitialLiquidity}
+            useManualLiquidity={useManualLiquidity}
+            setUseManualLiquidity={setUseManualLiquidity}
+            manualLiquidity={manualLiquidity}
+            setManualLiquidity={setManualLiquidity}
+            computedBalance={computedBalance}
           />
         )}
 
@@ -593,6 +647,13 @@ export default function App() {
             activities={activities}
             treasuryBalance={treasuryBalance}
             isDarkMode={isDarkMode}
+            initialLiquidity={initialLiquidity}
+            setInitialLiquidity={setInitialLiquidity}
+            useManualLiquidity={useManualLiquidity}
+            setUseManualLiquidity={setUseManualLiquidity}
+            manualLiquidity={manualLiquidity}
+            setManualLiquidity={setManualLiquidity}
+            computedBalance={computedBalance}
           />
         )}
 
@@ -632,6 +693,17 @@ export default function App() {
             isDarkMode={isDarkMode}
             onSeedDemoData={handleSeedDemoData}
             onClearDemoData={handleClearDemoData}
+            onRestoreDatabase={handleRestoreDatabase}
+            databaseBackup={{ members, clubs, leagues, positions, meetings, activities, contributions, journalEntries, employees, documents, alerts, initialLiquidity, useManualLiquidity, manualLiquidity }}
+            databaseStats={{
+              membersCount: members.length,
+              clubsCount: clubs.length,
+              leaguesCount: leagues.length,
+              contributionsCount: contributions.length,
+              journalCount: journalEntries.length,
+              employeesCount: employees.length,
+              documentsCount: documents.length
+            }}
           />
         )}
       </main>

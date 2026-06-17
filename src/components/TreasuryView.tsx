@@ -28,12 +28,20 @@ import {
   Bar 
 } from 'recharts';
 import { Contribution, Activity } from '../types';
+import TreasuryAdjustmentModal from './TreasuryAdjustmentModal';
 
 interface TreasuryViewProps {
   contributions: Contribution[];
   activities: Activity[];
   treasuryBalance: number;
   isDarkMode: boolean;
+  initialLiquidity: number;
+  setInitialLiquidity: (val: number) => void;
+  useManualLiquidity: boolean;
+  setUseManualLiquidity: (val: boolean) => void;
+  manualLiquidity: number;
+  setManualLiquidity: (val: number) => void;
+  computedBalance: number;
 }
 
 type PeriodType = 'Mensuel' | 'Trimestriel' | 'Annuel';
@@ -42,10 +50,18 @@ export default function TreasuryView({
   contributions,
   activities,
   treasuryBalance,
-  isDarkMode
+  isDarkMode,
+  initialLiquidity,
+  setInitialLiquidity,
+  useManualLiquidity,
+  setUseManualLiquidity,
+  manualLiquidity,
+  setManualLiquidity,
+  computedBalance,
 }: TreasuryViewProps) {
   
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('Mensuel');
+  const [isTreasuryModalOpen, setIsTreasuryModalOpen] = useState(false);
 
   // Recettes cumulées (All collected dues)
   const totalRevenues = contributions.reduce((sum, c) => sum + c.amount, 0);
@@ -102,17 +118,24 @@ export default function TreasuryView({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Real Balance */}
-        <div className={`p-4 rounded-xl border ${cardBgClass} flex items-center justify-between`}>
+        <div 
+          onClick={() => setIsTreasuryModalOpen(true)}
+          className={`p-4 rounded-xl border ${cardBgClass} flex items-center justify-between cursor-pointer hover:-translate-y-0.5 transition-transform group`}
+          title="Cliquez pour ajuster le solde initial ou fixer la trésorerie manuellement"
+        >
           <div>
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">💵 Solde Trésorerie Réel</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">💵 Solde Trésorerie Réel</span>
+              <span className="text-[9px] text-[#22B8A7] font-bold opacity-0 group-hover:opacity-100 transition-opacity">(Ajuster)</span>
+            </div>
             <div className={`text-xl font-bold mt-1 text-[#173C4A] dark:text-[#22B8A7]`}>
               {treasuryBalance.toLocaleString()} FCFA
             </div>
-            <p className="text-[10px] text-emerald-500 mt-1 font-bold flex items-center gap-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" /> Liquidités de coffre
+            <p className="text-[10px] text-emerald-500 mt-0.5 font-bold flex items-center gap-0.5">
+              <ArrowUpRight className="w-3.5 h-3.5" /> {useManualLiquidity ? 'Valeur brute fixée' : 'Comptabilité double active'}
             </p>
           </div>
-          <div className="p-2.5 bg-[#22B8A7]/10 text-[#22B8A7] rounded-lg">
+          <div className="p-2.5 bg-[#22B8A7]/10 text-[#22B8A7] rounded-lg group-hover:bg-[#22B8A7]/15 group-hover:text-[#22B8A7] transition-all">
             <PiggyBank className="w-6 h-6" />
           </div>
         </div>
@@ -227,6 +250,18 @@ export default function TreasuryView({
           )}
         </div>
       </div>
+
+      <TreasuryAdjustmentModal
+        isOpen={isTreasuryModalOpen}
+        onClose={() => setIsTreasuryModalOpen(false)}
+        initialLiquidity={initialLiquidity}
+        setInitialLiquidity={setInitialLiquidity}
+        useManualLiquidity={useManualLiquidity}
+        setUseManualLiquidity={setUseManualLiquidity}
+        manualLiquidity={manualLiquidity}
+        setManualLiquidity={setManualLiquidity}
+        computedBalance={computedBalance}
+      />
     </div>
   );
 }

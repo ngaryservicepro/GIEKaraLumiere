@@ -188,14 +188,8 @@ export default function AccountingView({
               
               <button
                 onClick={() => exportAccountingToPdf(
-                  activeSubTab, 
-                  journalEntries, 
-                  grandLivreData, 
-                  balanceRows, 
-                  productsRows, 
-                  expensesRows, 
-                  assetRows, 
-                  liabilityRows
+                  journalEntries,
+                  activeSubTab as any
                 )}
                 className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-[#22B8A7]/20 bg-[#22B8A7]/10 text-[#22B8A7] hover:bg-[#22B8A7]/20 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >

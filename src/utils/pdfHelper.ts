@@ -1,11 +1,11 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Member, Contribution, JournalEntry, Meeting, Club, League, CHART_OF_ACCOUNTS } from '../types';
+import { Member, Contribution, JournalEntry, Meeting, Club, League, CHART_OF_ACCOUNTS, Activity } from '../types';
 
 // GIE Theme colors
-const COLOR_PRIMARY = [23, 60, 74];    // #173C4A (Navy)
-const COLOR_SECONDARY = [34, 184, 167]; // #22B8A7 (Teal)
-const COLOR_ACCENT = [14, 37, 46];      // #0E252E (Dark Navy)
+const COLOR_PRIMARY: [number, number, number] = [23, 60, 74];    // #173C4A (Navy)
+const COLOR_SECONDARY: [number, number, number] = [34, 184, 167]; // #22B8A7 (Teal)
+const COLOR_ACCENT: [number, number, number] = [14, 37, 46];      // #0E252E (Dark Navy)
 
 // DRAW OFFICIAL GIE HEADER BANNER
 function drawHeader(doc: jsPDF, title: string) {

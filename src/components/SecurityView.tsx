@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Shield, User, Key, CheckCircle, Smartphone, Award, RefreshCw } from 'lucide-react';
+import { Shield, User, Key, CheckCircle, Smartphone, Award, RefreshCw, Database, Download, Upload, Info, AlertTriangle } from 'lucide-react';
 import { UserRole } from '../types';
 
 interface SecurityViewProps {
@@ -13,6 +13,17 @@ interface SecurityViewProps {
   isDarkMode: boolean;
   onSeedDemoData: () => void;
   onClearDemoData: () => void;
+  onRestoreDatabase: (data: any) => void;
+  databaseBackup: any;
+  databaseStats: {
+    membersCount: number;
+    clubsCount: number;
+    leaguesCount: number;
+    contributionsCount: number;
+    journalCount: number;
+    employeesCount: number;
+    documentsCount: number;
+  };
 }
 
 export default function SecurityView({
@@ -20,12 +31,17 @@ export default function SecurityView({
   setCurrentUserRole,
   isDarkMode,
   onSeedDemoData,
-  onClearDemoData
+  onClearDemoData,
+  onRestoreDatabase,
+  databaseBackup,
+  databaseStats
 }: SecurityViewProps) {
   
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [email, setEmail] = useState('ngaryservicepro@gmail.com');
   const [showNotification, setShowNotification] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
 
   // List of roles
   const roles: UserRole[] = [
@@ -54,6 +70,42 @@ export default function SecurityView({
       case 'Responsable Musicale': return 'bg-pink-100 text-pink-850 dark:bg-pink-950/40 dark:text-pink-300 border-pink-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200';
     }
+  };
+
+  const handleJsonExport = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(databaseBackup, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `gie_kara_lumiere_backup_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleJsonImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        
+        // Simple verification that the backup contains target keys
+        if (!json.members && !json.clubs && !json.leagues && !json.contributions) {
+          throw new Error("Format invalide. Le fichier doit être une sauvegarde valide du GIE Kara Lumière.");
+        }
+
+        onRestoreDatabase(json);
+        setImportSuccess(true);
+        setImportError(null);
+        setTimeout(() => setImportSuccess(false), 3000);
+      } catch (err: any) {
+        setImportError(err.message || "Fichier JSON corrompu ou invalide.");
+        setImportSuccess(false);
+      }
+    };
+    reader.readAsText(file);
   };
 
   const headingClass = isDarkMode ? 'text-white' : 'text-[#173C4A]';
@@ -151,15 +203,80 @@ export default function SecurityView({
             </div>
           </div>
 
-          {/* TESTING SEED HELPER (Extremely thoughtful for start-empty requirement) */}
-          <div className={`p-6 border border-[#22B8A7] bg-slate-900 text-white rounded-xl space-y-4 shadow-sm`}>
-            <div className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5 text-[#22B8A7] animate-spin" style={{ animationDuration: '6s' }} />
-              <h3 className="font-bold text-sm text-[#22B8A7]">Évaluer avec données de démonstration</h3>
+          {/* DATABASE STACK BACKUP & PERSISTENCE - PORTING sama-gestion.ngary.com */}
+          <div className={`p-6 rounded-xl border ${cardBgClass} space-y-4`}>
+            <div className="flex items-center gap-2 text-[#22B8A7]">
+              <Database className="w-5 h-5" />
+              <h3 className={`font-bold text-sm ${headingClass}`}>Mémoire & Sauvegarde Globale</h3>
+            </div>
+            <p className="text-xs text-gray-400">
+              Téléchargez l'intégralité de la base de données en format JSON pour la restaurer ultérieurement, à l'identique de notre outil de synchronisation.
+            </p>
+
+            <div className="p-3 bg-[#122e38] dark:bg-black/20 rounded-lg text-xs space-y-2 text-gray-400">
+              <div className="font-semibold text-xs border-b border-gray-700 pb-1 text-white uppercase tracking-wider">État actuel du GIE :</div>
+              <div className="flex justify-between">
+                <span>Adhérents enregistrés :</span>
+                <span className="font-bold text-white">{databaseStats.membersCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Cotisations perçues :</span>
+                <span className="font-bold text-white">{databaseStats.contributionsCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Journaux Comptables :</span>
+                <span className="font-bold text-white">{databaseStats.journalCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Clubs artistiques :</span>
+                <span className="font-bold text-white">{databaseStats.clubsCount}</span>
+              </div>
             </div>
 
-            <p className="text-xs text-gray-300">
-              Conformément à la directive, cette application démarre **strictement vide**. Si vous souhaitez l'évaluer immédiatement sans saisir manuellement les CNI, cliquez sur le bouton ci-dessous pour injecter des fiches de démonstration préremplies (Dakar, Thiès, etc.).
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleJsonExport}
+                className="py-2.5 px-3 bg-[#173C4A] hover:bg-[#12303c] text-white rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 cursor-pointer transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> Exporter (.json)
+              </button>
+
+              <label className="py-2.5 px-3 bg-[#22B8A7]/10 hover:bg-[#22B8A7]/25 text-[#22B8A7] border border-[#22B8A7]/30 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 cursor-pointer transition-colors text-center">
+                <Upload className="w-3.5 h-3.5" /> Importer
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleJsonImport}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {importSuccess && (
+              <div className="p-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded text-[10px] font-medium flex items-center gap-1.5 animate-pulse">
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>Base restituée et consolidée !</span>
+              </div>
+            )}
+
+            {importError && (
+              <div className="p-2 bg-red-500/15 border border-red-500/30 text-red-400 rounded text-[10px] font-medium flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{importError}</span>
+              </div>
+            )}
+          </div>
+
+          {/* TESTING SEED HELPER */}
+          <div className={`p-6 border border-[#22B8A7]/30 bg-slate-900/60 dark:bg-black/40 text-white rounded-xl space-y-4 shadow-xs`}>
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-[#22B8A7] animate-spin" style={{ animationDuration: '10s' }} />
+              <h3 className="font-bold text-sm text-[#22B8A7]">Zone d'Évaluation de Démo</h3>
+            </div>
+
+            <p className="text-[11px] text-gray-300">
+              Conformément à la directive, cette application démarre **strictement vide**. Si vous souhaitez l'évaluer immédiatement sans saisir manuellement les CNI, cliquez sur le bouton ci-dessous pour injecter des fiches de démonstration préremplies.
             </p>
 
             <button
@@ -167,7 +284,7 @@ export default function SecurityView({
                 onSeedDemoData();
                 alert("Données d'évaluation de démonstration injectées avec succès dans le localStorage !");
               }}
-              className="w-full py-2 bg-[#22B8A7] hover:bg-[#1ea091] text-white font-semibold rounded text-xs transition-colors"
+              className="w-full py-2 bg-[#22B8A7] hover:bg-[#1ea091] text-white font-semibold rounded text-xs transition-colors cursor-pointer"
               id="btn-seed-data-sec"
             >
               Injecter le Set d'Évaluation GIE
@@ -178,7 +295,7 @@ export default function SecurityView({
                 onClearDemoData();
                 alert("Base de données réinitialisée à vide !");
               }}
-              className="w-full py-2 border border-red-500 text-red-400 hover:bg-red-950/20 font-semibold rounded text-xs transition-colors"
+              className="w-full py-2 border border-red-500/50 text-red-400 hover:bg-red-950/20 font-semibold rounded text-xs transition-colors cursor-pointer"
               id="btn-clear-data-sec"
             >
               Remettre à vide (Zéro Donnée)
