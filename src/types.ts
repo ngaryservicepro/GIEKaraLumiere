@@ -147,15 +147,15 @@ export interface JournalEntry {
   amount: number;
 }
 
-// Human Resources definition
+// Human Resources definition - Non-salaried GIE Collaborators & Providers
 export interface Employee {
   id: string;
   fullName: string;
   position: string;
-  contractType: 'CDI' | 'CDD' | 'Stage' | 'MAD' | 'DPAE';
+  contractType: 'Prestataire' | 'Bénévole' | 'Stagiaire' | 'MAD' | 'Consultant';
   startDate: string;
   endDate?: string;
-  salary: number;
+  salary: number; // Indemnités / Honoraires (FCFA)
   email: string;
   phone: string;
 }

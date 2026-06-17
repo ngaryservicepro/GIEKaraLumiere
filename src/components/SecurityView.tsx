@@ -93,7 +93,7 @@ export default function SecurityView({
         
         // Simple verification that the backup contains target keys
         if (!json.members && !json.clubs && !json.leagues && !json.contributions) {
-          throw new Error("Format invalide. Le fichier doit être une sauvegarde valide du GIE Kara Lumière.");
+          throw new Error("Format invalide. Le fichier doit être une sauvegarde valide du GIE 221 Lumière.");
         }
 
         onRestoreDatabase(json);

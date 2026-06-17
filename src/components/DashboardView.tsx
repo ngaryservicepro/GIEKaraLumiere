@@ -183,9 +183,11 @@ export default function DashboardView({
       {/* Dynamic welcome message */}
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Tableau de Bord</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Tableau de Bord</h1>
+          </div>
           <p className={`text-sm ${textClass}`}>
-            Bienvenue sur la console intelligente du GIE Kara Lumier.
+            Bienvenue sur la console d'administration du <strong className="text-[#22B8A7]">GIE 221 Lumière</strong>.
           </p>
         </div>
         

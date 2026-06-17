@@ -65,7 +65,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages?: number) {
   doc.setTextColor(140, 140, 140);
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7.5);
-  doc.text('GIE Kara Lumière - Enregistrement légal SYSCOHADA - Secrétariat Général & Direction de la Trésorerie', 15, 288);
+  doc.text('GIE 221 Lumière - Enregistrement légal SYSCOHADA - Secrétariat Général & Direction de la Trésorerie', 15, 288);
   const pageStr = `Page ${pageNum}${totalPages ? ' sur ' + totalPages : ''}`;
   doc.text(pageStr, 195 - doc.getTextWidth(pageStr), 288);
 }
@@ -96,7 +96,7 @@ export function exportDashboardToPdf(data: {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(80, 80, 80);
-  doc.text('Ce rapport dresse la feuille de situation globale du Groupement d\'Intérêt Économique (GIE) Kara Lumière.', 15, 62);
+  doc.text('Ce rapport dresse la feuille de situation globale du Groupement d\'Intérêt Économique (GIE) 221 Lumière.', 15, 62);
   doc.text('Il consolide les effectifs, la balance trésorerie, les budgets alloués et le calendrier d\'administration.', 15, 66);
 
   // BENTO STATS METRICS GRID (Drawing manual key boxes)
@@ -199,7 +199,7 @@ export function exportDashboardToPdf(data: {
 
   // Final Seal and page numbers
   drawFooter(doc, 1, 1);
-  doc.save('GIE_Kara_Lumiere_Rapport_Tableau_De_Bord.pdf');
+  doc.save('GIE_221_Lumiere_Rapport_Tableau_De_Bord.pdf');
 }
 
 // ==========================================
@@ -217,7 +217,7 @@ export function exportMembersToPdf(members: Member[], clubs: Club[], leagues: Le
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('GIE KARA LUMIÈRE', 15, 15);
+  doc.text('GIE 221 LUMIÈRE', 15, 15);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
@@ -284,11 +284,11 @@ export function exportMembersToPdf(members: Member[], clubs: Club[], leagues: Le
     doc.setTextColor(130, 130, 130);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7.5);
-    doc.text('GIE Kara Lumière - Enregistrement d\'état civil et d\'inscription des personnels - Document Confidentiel S1', 15, 201);
+    doc.text('GIE 221 Lumière - Enregistrement d\'état civil et d\'inscription des personnels - Document Confidentiel S1', 15, 201);
     doc.text(`Page ${i} sur ${pageCount}`, 282 - doc.getTextWidth(`Page ${i} sur ${pageCount}`), 201);
   }
 
-  doc.save('GIE_Kara_Lumiere_Registre_Des_Membres.pdf');
+  doc.save('GIE_221_Lumiere_Registre_Des_Membres.pdf');
 }
 
 // ==========================================
@@ -389,7 +389,7 @@ export function exportContributionsToPdf(contributions: Contribution[], members:
     drawFooter(doc, p, totalPages);
   }
 
-  doc.save('GIE_Kara_Lumiere_Bilan_Recouvrements.pdf');
+  doc.save('GIE_221_Lumiere_Bilan_Recouvrements.pdf');
 }
 
 // ==========================================
@@ -656,7 +656,7 @@ export function exportAccountingToPdf(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(110, 110, 110);
-  doc.text(`GIE Kara Lumière, Commission de Contrôle de Gestion.`, 15, signatureY + 12);
+  doc.text(`GIE 221 Lumière, Commission de Contrôle de Gestion.`, 15, signatureY + 12);
   doc.rect(15, signatureY + 16, 60, 20);
   doc.text('[ Signature & Tampon Orgue ]', 20, signatureY + 27);
 
@@ -667,7 +667,7 @@ export function exportAccountingToPdf(
     drawFooter(doc, p, totalPages);
   }
 
-  doc.save(`GIE_Kara_Lumiere_Comptabilite_${subTab}.pdf`);
+  doc.save(`GIE_221_Lumiere_Comptabilite_${subTab}.pdf`);
 }
 
 // ==========================================
@@ -867,6 +867,6 @@ export function exportMeetingsToPdf(meetings: Meeting[], selectedMeeting?: Meeti
     drawFooter(doc, p, totalPages);
   }
 
-  const nameOut = selectedMeeting ? `GIE_PV_${selectedMeeting.id}.pdf` : 'GIE_Kara_Lumiere_Registre_Reunions.pdf';
+  const nameOut = selectedMeeting ? `GIE_PV_${selectedMeeting.id}.pdf` : 'GIE_221_Lumiere_Registre_Reunions.pdf';
   doc.save(nameOut);
 }

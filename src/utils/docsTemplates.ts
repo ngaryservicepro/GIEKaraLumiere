@@ -6,93 +6,148 @@
 import { Employee } from '../types';
 
 export function generateContractText(employee: Employee): string {
-  return `CONTRAT DE TRAVAIL À DURÉE DÉTERMINÉE/INDÉTERMINÉE
+  if (employee.contractType === 'Bénévole') {
+    return `CONVENTION DE BÉNÉVOLAT ET D'ENGAGEMENT MANDATAIRE
 ===================================================
 
 ENTRE LES SOUSSIGNÉS:
-Le GIE KARA LUMIER, sis à Dakar, Sénégal, représenté par son Président, d'une part,
+Le GIE 221 LUMIÈRE, sis à Dakar, Sénégal, représenté par son Président, d'une part,
 ET
-M./Mme ${employee.fullName}, demeurant au numéro fourni, d'autre part.
+M./Mme ${employee.fullName}, ci-après dénommé(e) "Le/La Bénévole", d'autre part.
 
 IL A ÉTÉ CONVENU CE QUI SUIT:
 
-Article 1: Fonctions et qualification
-M./Mme ${employee.fullName} est engagé(e) en qualité de ${employee.position} sous le statut ${employee.contractType}.
+Article 1: Objet de l'engagement
+Le/la Bénévole s'engage à apporter son concours à titre gracieux et volontaire aux activités d'intérêt commun du GIE 221 Lumière, en qualité de : ${employee.position}.
 
-Article 2: Date d'effet
-Le présent contrat prendra effet le ${employee.startDate}.
+Article 2: Absence de relation salariale
+Le présent engagement est de nature strictement bénévole. Il ne confère aucun statut de salarié, n'est régi par aucun contrat de travail et exclut tout lien de subordination juridique. Le/la Bénévole reste libre de mettre fin à sa participation à tout moment.
 
-Article 3: Rémunération
-En contrepartie, le GIE Kara Lumier versera une rémunération brute mensuelle de ${employee.salary.toLocaleString()} FCFA.
+Article 3: Indemnités de défraiement et de transport
+Dans le cadre de ses missions, le GIE 221 Lumière pourra allouer au Bénévole une indemnité forfaitaire de transport et subsistance mensuelle d'un montant maximum de ${employee.salary.toLocaleString()} FCFA pour couvrir les frais engaged pour le compte du groupement.
 
 Fait à Dakar, le ${new Date().toLocaleDateString('fr-FR')}
 Signatures précédées de la mention "Lu et approuvé"
 
 ______________________                  ______________________
-Le GIE Kara Lumier                      L'Employé(e)`;
+Le GIE 221 Lumière                      Le/La Bénévole`;
+  }
+
+  if (employee.contractType === 'Stagiaire') {
+    return `CONVENTION DE STAGE PRATIQUE NOMINATIVE
+===================================================
+
+ENTRE LES SOUSSIGNÉS:
+Le GIE 221 LUMIÈRE, sis à Dakar, Sénégal, représenté par son Président, d'une part,
+ET
+M./Mme ${employee.fullName}, ci-après dénommé(e) "Le/La Stagiaire", d'autre part.
+
+IL A ÉTÉ CONVENU CE QUI SUIT:
+
+Article 1: Objet du stage d'apprentissage
+Le/la Stagiaire est accueilli au sein du GIE 221 Lumière pour effectuer un stage d'immersion pratique en qualité de : ${employee.position}.
+
+Article 2: Statut de l'apprenant et durée
+Ce stage vise exclusivement le développement des compétences du stagiaire et ne remplace aucun rôle salarié permanent. Le stage débutera le ${employee.startDate}.
+
+Article 3: Gratification académique / d'encouragement
+Le présent stage n'étant pas un contrat de travail, il ne donne pas lieu à un salaire. Toutefois, à titre de gratification d'encouragement, le GIE versera au Stagiaire une somme mensuelle de ${employee.salary.toLocaleString()} FCFA.
+
+Fait à Dakar, le ${new Date().toLocaleDateString('fr-FR')}
+Signatures précédées de la mention "Lu et de droit"
+
+______________________                  ______________________
+Le GIE 221 Lumière                      Le/La Stagiaire`;
+  }
+
+  // Prestateur, Consultant or standard Service contract
+  return `CONTRAT DE PRESTATION DE SERVICE ET D'HONORAIRES
+===================================================
+
+ENTRE LES SOUSSIGNÉS:
+Le GIE 221 LUMIÈRE, sis à Dakar, Sénégal, représenté par son Président, d'une part,
+ET
+M./Mme ${employee.fullName}, Consultant(e) indépendant / Prestataire de services, d'autre part.
+
+IL A ÉTÉ CONVENU CE QUI SUIT:
+
+Article 1: Nature des prestations artistiques ou administratives
+Le Prestataire s'engage à exécuter en toute indépendance et autonomie les prestations d'expertise suivantes : ${employee.position}.
+
+Article 2: Indépendance et cadre contractuel
+Le présent contrat est soumis aux règles de l'OHADA sur le droit des obligations commerciales. Il exclut explicitement toute qualification de contrat de travail, le Prestataire exerçant sa mission sans aucun lien de subordination hiérarchique.
+
+Article 3: Honoraires forfaitaires de mission
+Le GIE 221 Lumière versera au Prestataire des honoraires mensuels forfaitaires de ${employee.salary.toLocaleString()} FCFA, exigibles à terme échu sur présentation de facture acquittée ou note d'honoraires.
+
+Fait à Dakar, le ${new Date().toLocaleDateString('fr-FR')}
+Signatures précédées de la mention "Contrat Lu et Accepté"
+
+______________________                  ______________________
+Le GIE 221 Lumière                      Le Prestataire`;
 }
 
 export function generateMADText(employee: Employee): string {
-  return `CONVENTION DE MISE À DISPOSITION (MAD)
-=====================================
+  return `CONVENTION DE MISE À DISPOSITION (MAD) DE PERSONNEL PARTENAIRE
+==================================================================
 
 ENTRE LES SOUSSIGNÉS:
-Le GIE KARA LUMIER, ci-après dénommé "Organisme d'Origine",
+Le GIE 221 LUMIÈRE, ci-après dénommé "Organisme Mandataire",
 ET
-La structure d'accueil affiliée au GIE, ci-après dénommée "Structure d'Accueil".
+La structure d'accueil affiliée ou un club membre du GIE, ci-après "La Structure Bénéficiaire".
 
-Il est convenu de la mise à disposition de l'employé(e) suivant(e):
-Nom Complet : ${employee.fullName}
-Poste Occupé : ${employee.position}
+Il est convenu de la mise à disposition pour mission d'intérêt commun du collaborateur suivant:
+Nom Complet des intervenants : ${employee.fullName}
+Nature de la mission : ${employee.position}
 
-Conditions de MAD:
-- Date de début : ${employee.startDate}
-- Horaires et règles applicables conformément au règlement intérieur de la structure d'accueil.
-- Prise en charge financière assurée selon la balance comptable partagée (réf. Plan Comptable GIE).
+Conditions de mise à disposition :
+- Date de prise d'effet : ${employee.startDate}
+- Autonomie : L'intervenant réalise sa mission en accord avec le Bureau Exécutif du GIE.
+- Prise en charge financière : Le GIE 221 Lumière compense les coûts opérationnels ou frais de déplacement d'un montant de ${employee.salary.toLocaleString()} FCFA par mois, réglés via le Journal du GIE.
 
-Fait en double exemplaire, le ${new Date().toLocaleDateString('fr-FR')}
+Fait en double exemplaire originaux, le ${new Date().toLocaleDateString('fr-FR')}
 
 ______________________                  ______________________
-Le GIE Kara Lumier                      La Structure d'Accueil`;
+Le GIE 221 Lumière                      La Structure Bénéficiaire`;
 }
 
 export function generateITCharter(): string {
-  return `CHARTE D'UTILISATION DES SYSTÈMES D'INFORMATION
-===================================================
+  return `CHARTE D'UTILISATION DES SYSTÈMES ET SECURITÉ D'INFORMATION
+==================================================================
 
-GIE KARA LUMIER - PLATEFORME INTÉLLIGENTE
+GIE 221 LUMIÈRE - PORTAIL DE GESTION ADMINISTRATIVE
 
 1. Préambule
-La présente charte a pour objet de définir les règles d'usage et de sécurité de l'outil informatique et du réseau du GIE Kara Lumier.
+La présente charte a pour objet de définir les règles de bonne conduite d'usage et de sécurité de l'outil informatique et du réseau d'administration du GIE 221 Lumière.
 
-2. Accès aux ressources
-Les identifiants et mots de passe attribués aux administrateurs (Super Administrateur, Président, Trésorier, Secrétaire Général, Responsable Musicale) sont personnels et confidentiels.
+2. Accès réservé aux rôles autorisés
+Les accès et identifiants attribués de manière nominative aux administrateurs (Super Administrateur, Président, Trésorier, Secrétaire Général, Responsables) sont personnels, confidentiels, et ne peuvent être divulgués à aucun tiers externe.
 
-3. Utilisation de la messagerie
-L'usage des e-mails professionnels doit être conforme aux objectifs du GIE.
+3. Protection des fichiers archivistiques
+Tout document sensible stocké sur ce portail (CNIs numérisés, balance comptable, registres d'activités des clubs) doit être manipulé avec intégrité absolue et ne doit faire l'objet d'aucune exportation non-autorisée.
 
-4. Responsabilité administrative
-Tous les documents téléchargés (CNI, Balance comptable, Comptes de résultat) doivent être conservés sur la plateforme de manière sécurisée.
+4. Responsabilité opérationnelle
+Les intervenants, prestataires et encadrants des clubs s'engagent à respecter cette charte lors de leur participation aux événements organisés.
 
 Fait pour servir et valoir ce que de droit.
 Dakar, le ${new Date().toLocaleDateString('fr-FR')}`;
 }
 
 export function generateConfidentialityText(employee: Employee): string {
-  return `ENGAGEMENT DE CONFIDENTIALITÉ
-==============================
+  return `ENGAGEMENT SOLENNEL DE CONFIDENTIALITÉ ET D'ÉTHIQUE
+===========================================================
 
-Je soussigné(e), M./Mme ${employee.fullName}, de nationalité sénégalaise, recruté(e) en tant que ${employee.position} au sein du GIE Kara Lumier.
+Je soussigné(e), M./Mme ${employee.fullName}, de nationalité sénégalaise, intervenant en tant que ${employee.position} au sein du GIE 221 Lumière.
 
-M'engage à respecter une confidentialité absolue concernant :
-1. Les données financières et comptables (Plan comptable du GIE, cotisations collectées).
-2. Les informations relatives aux membres (CNI déposés, coordonnées personnelles).
-3. Les décisions stratégiques du Bureau Exécutif prises lors des réunions.
+M'engage par la présente à respecter une confidentialité absolue concernant :
+1. Les données financières et d'écritures (Balance SYSCOHADA, comptes de résultat du GIE, cotisations).
+2. Les pièces d'identité et dossiers d'état civil des membres et athlètes des clubs.
+3. Les délibérations internes et décisions adoptées lors des assemblées générales et réunions de Bureau.
 
-En cas de manquement, je m'expose aux sanctions prévues par le code du travail et le règlement intérieur.
+En cas de manquement à cet engagement d'éthique, je reconnais que ma révocation, suspension ou l'annulation de mes mandats au sein du GIE pourront être prononcées sans délai par le Bureau Exécutif, sans préjudice de poursuites civiles ordinaires.
 
 Date de signature : ${new Date().toLocaleDateString('fr-FR')}
 
 ______________________
-Signature de l'Employé`;
+Signature du Collaborateur`;
 }

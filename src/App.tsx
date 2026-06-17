@@ -425,8 +425,8 @@ export default function App() {
 
     // 9. Staff
     const sampleEmployees: Employee[] = [
-      { id: 'EMP-001', fullName: "Seynabou Ndiaye", position: "Assistant Secrétaire Générale", contractType: "CDI", startDate: "2025-01-05", salary: 180000, email: "seynabou@karalumier.sn", phone: "+221 77 452 10 10" },
-      { id: 'EMP-002', fullName: "Fallou Fall", position: "Régisseur principal d'instruments", contractType: "CDD", startDate: "2025-03-20", salary: 120500, email: "fallou.fall@karalumier.sn", phone: "+221 77 821 00 22" }
+      { id: 'EMP-001', fullName: "Seynabou Ndiaye", position: "Assistant Secrétaire Générale", contractType: "Prestataire", startDate: "2025-01-05", salary: 180000, email: "seynabou@karalumier.sn", phone: "+221 77 452 10 10" },
+      { id: 'EMP-002', fullName: "Fallou Fall", position: "Régisseur principal d'instruments", contractType: "Bénévole", startDate: "2025-03-20", salary: 120500, email: "fallou.fall@karalumier.sn", phone: "+221 77 821 00 22" }
     ];
 
     // 10. Documents
@@ -478,10 +478,15 @@ export default function App() {
       {/* Mobile Sticky Navbar */}
       <header className="lg:hidden flex items-center justify-between p-4 bg-[#173C4A] text-white border-b border-[#22B8A7]/20 sticky top-0 z-45 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#22B8A7]/15 flex items-center justify-center border border-[#22B8A7] shadow-sm">
-            <span className="text-[#22B8A7] font-extrabold text-xs tracking-wider font-display">KL</span>
+          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-[#22B8A7] shadow-sm overflow-hidden">
+            <img 
+              src="/src/assets/images/gie_logo_1781655966296.jpg" 
+              alt="Logo GIE 221 Lumière" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </div>
-          <h2 className="font-display font-extrabold text-[13px] tracking-wider uppercase text-white">GIE Kara Lumier</h2>
+          <h2 className="font-display font-extrabold text-[13px] tracking-wider uppercase text-white">GIE 221 Lumière</h2>
         </div>
         
         <button 
