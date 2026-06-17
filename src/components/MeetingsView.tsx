@@ -23,6 +23,8 @@ import {
   UserCheck
 } from 'lucide-react';
 import { Meeting, Member, ActionItem } from '../types';
+import { exportMeetingsToPdf } from '../utils/pdfHelper';
+import PdfImportModal from './PdfImportModal';
 
 interface MeetingsViewProps {
   meetings: Meeting[];
@@ -51,6 +53,7 @@ export default function MeetingsView({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [organizerFilter, setOrganizerFilter] = useState<string>('All');
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
@@ -240,22 +243,41 @@ export default function MeetingsView({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Réunions & Procès-Verbaux</h1>
           <p className={`text-sm ${textClass}`}>
             Planifier des assemblées, ordonner le jour des débats et consigner de manière juridique et électronique les décisions de séance.
           </p>
         </div>
-        {canModify && !showAddForm && (
-          <button
-            onClick={() => { resetForm(); setShowAddForm(true); }}
-            className="self-start sm:self-center bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors shadow-sm"
-            id="btn-add-meeting"
-          >
-            <Plus className="w-4 h-4" /> Nouvelle Réunion
-          </button>
-        )}
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {canModify && !showAddForm && (
+            <>
+              <button 
+                onClick={() => setIsImportOpen(true)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#122e38] text-gray-700 dark:text-gray-205 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📥 Importer PV PDF
+              </button>
+              
+              <button
+                onClick={() => exportMeetingsToPdf(selectedMeeting ? [selectedMeeting] : meetings)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-[#22B8A7]/20 bg-[#22B8A7]/10 text-[#22B8A7] hover:bg-[#22B8A7]/20 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📤 Exporter {selectedMeeting ? "PV Actif" : "Liste PV"} PDF
+              </button>
+
+              <button
+                onClick={() => { resetForm(); setShowAddForm(true); }}
+                className="bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                id="btn-add-meeting"
+              >
+                <Plus className="w-4 h-4" /> Nouvelle Réunion
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {showAddForm && (
@@ -784,6 +806,17 @@ export default function MeetingsView({
         </div>
 
       </div>
+      <PdfImportModal 
+        isOpen={isImportOpen} 
+        onClose={() => setIsImportOpen(false)} 
+        section="reunion" 
+        members={members}
+        onImportComplete={(importedMeeting: any) => {
+          if (importedMeeting) {
+            addMeeting(importedMeeting);
+          }
+        }} 
+      />
     </div>
   );
 }

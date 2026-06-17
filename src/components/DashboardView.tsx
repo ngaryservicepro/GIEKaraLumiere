@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Users, 
   Coins, 
@@ -36,6 +36,8 @@ import {
   Bar 
 } from 'recharts';
 import { Member, Club, League, Meeting, Activity, Contribution } from '../types';
+import { exportDashboardToPdf } from '../utils/pdfHelper';
+import PdfImportModal from './PdfImportModal';
 
 interface DashboardViewProps {
   members: Member[];
@@ -48,6 +50,8 @@ interface DashboardViewProps {
   isDarkMode: boolean;
   onNavigate: (tab: string) => void;
   setSelectedMeeting: (meeting: Meeting | null) => void;
+  alerts?: any[];
+  setAlerts?: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export default function DashboardView({
@@ -60,8 +64,12 @@ export default function DashboardView({
   treasuryBalance,
   isDarkMode,
   onNavigate,
-  setSelectedMeeting
+  setSelectedMeeting,
+  alerts = [],
+  setAlerts
 }: DashboardViewProps) {
+  
+  const [isImportOpen, setIsImportOpen] = useState(false);
   
   // Dynamic metrics
   const totalMembers = members.length;
@@ -157,21 +165,47 @@ export default function DashboardView({
   return (
     <div className="space-y-6">
       {/* Dynamic welcome message */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-2 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Tableau de Bord</h1>
           <p className={`text-sm ${textClass}`}>
             Bienvenue sur la console intelligente du GIE Kara Lumier.
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-2">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-            <span className="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-ping"></span>
-            Mode Synchrone Connecté
-          </span>
-          <span className="text-xs text-gray-400 font-mono">
-            Mis à jour : {new Date().toLocaleDateString('fr-FR')} {new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
-          </span>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 mr-2">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10">
+              <span className="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-ping"></span>
+              Mode Connecté
+            </span>
+            <span className="hidden sm:inline text-xs text-gray-400 font-mono">
+              Màj: {new Date().toLocaleDateString('fr-FR')}
+            </span>
+          </div>
+
+          <button 
+            onClick={() => setIsImportOpen(true)}
+            className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#122e38] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+          >
+            📥 Importer PDF
+          </button>
+          
+          <button 
+            onClick={() => exportDashboardToPdf({
+              memberCount: totalMembers,
+              clubCount: totalClubs,
+              leagueCount: totalLeagues,
+              meetingsPlanned: scheduledMeetings + ongoingMeetings,
+              treasuryBalance,
+              totalCollected: totalCollectedDues,
+              upcomingMeetings: meetings.filter(m => m.status === 'Planifiée'),
+              activities: activities.map(a => ({ name: a.name, budget: a.budget, status: a.status }))
+            })}
+            className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#22B8A7] hover:bg-[#1fa192] text-white flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+          >
+            📤 Exporter PDF
+          </button>
         </div>
       </div>
 
@@ -558,6 +592,18 @@ export default function DashboardView({
           </div>
         )}
       </div>
+
+      <PdfImportModal 
+        isOpen={isImportOpen} 
+        onClose={() => setIsImportOpen(false)} 
+        section="dashboard" 
+        onImportComplete={(alertData) => {
+          if (alertData && setAlerts) {
+            const nextId = 'ALT-' + Math.floor(1000 + Math.random() * 9000);
+            setAlerts(prev => [{ id: nextId, isRead: false, ...alertData }, ...prev]);
+          }
+        }} 
+      />
     </div>
   );
 }

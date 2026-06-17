@@ -6,6 +6,8 @@
 import React, { useState } from 'react';
 import { Plus, Search, CheckCircle, Coins, CreditCard, Trash2, Calendar, User, ShoppingBag, X } from 'lucide-react';
 import { Contribution, Member, Activity } from '../types';
+import { exportContributionsToPdf } from '../utils/pdfHelper';
+import PdfImportModal from './PdfImportModal';
 
 interface CotisationsViewProps {
   contributions: Contribution[];
@@ -29,6 +31,7 @@ export default function CotisationsView({
   
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Form states
   const [activityId, setActivityId] = useState('');
@@ -101,25 +104,44 @@ export default function CotisationsView({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Recouvrements / Cotisations</h1>
           <p className={`text-sm ${textClass}`}>
             Enregistrer les versements mensuels ou exceptionnels des membres et générer les reçus comptabilisés en temps réel.
           </p>
         </div>
-        {canModify && !showForm && (
-          <button
-            onClick={() => {
-              setReference(generateReference(paymentMethod));
-              setShowForm(true);
-            }}
-            className="bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors shadow-sm"
-            id="btn-trigger-addcotisation"
-          >
-            <Plus className="w-4 h-4" /> Encaisser une Cotisation
-          </button>
-        )}
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {canModify && !showForm && (
+            <>
+              <button 
+                onClick={() => setIsImportOpen(true)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#122e38] text-gray-700 dark:text-gray-205 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📥 Importer Pièces PDF
+              </button>
+              
+              <button
+                onClick={() => exportContributionsToPdf(contributions, members, activities)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-[#22B8A7]/20 bg-[#22B8A7]/10 text-[#22B8A7] hover:bg-[#22B8A7]/20 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📤 Exporter Liste PDF
+              </button>
+
+              <button
+                onClick={() => {
+                  setReference(generateReference(paymentMethod));
+                  setShowForm(true);
+                }}
+                className="bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                id="btn-trigger-addcotisation"
+              >
+                <Plus className="w-4 h-4" /> Encaisser une Cotisation
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {showForm && (
@@ -331,6 +353,19 @@ export default function CotisationsView({
           </div>
         </div>
       )}
+
+      <PdfImportModal 
+        isOpen={isImportOpen} 
+        onClose={() => setIsImportOpen(false)} 
+        section="cotisation" 
+        members={members}
+        activities={activities}
+        onImportComplete={(importedDues: any[]) => {
+          if (Array.isArray(importedDues)) {
+            importedDues.forEach(c => addContribution(c));
+          }
+        }} 
+      />
     </div>
   );
 }

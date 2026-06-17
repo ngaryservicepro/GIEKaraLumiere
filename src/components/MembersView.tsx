@@ -21,6 +21,8 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { Member, Club, League } from '../types';
+import { exportMembersToPdf } from '../utils/pdfHelper';
+import PdfImportModal from './PdfImportModal';
 
 interface MembersViewProps {
   members: Member[];
@@ -47,6 +49,7 @@ export default function MembersView({
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Form Fields State
   const [fullName, setFullName] = useState('');
@@ -225,22 +228,41 @@ export default function MembersView({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Gestion des Membres</h1>
           <p className={`text-sm ${textClass}`}>
             Inscrire, administrer et valider les dossiers juridiques et sportifs des adhérents.
           </p>
         </div>
-        {canModify && !showAddForm && (
-          <button
-            onClick={() => { resetForm(); setShowAddForm(true); }}
-            className="self-start sm:self-center bg-[#22B8A7] hover:bg-[#1da192] text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-1.5 transition-colors shadow-sm"
-            id="btn-trigger-addmember-form"
-          >
-            <Plus className="w-4 h-4" /> Ajouter un Membre
-          </button>
-        )}
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {canModify && !showAddForm && (
+            <>
+              <button 
+                onClick={() => setIsImportOpen(true)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#122e38] text-gray-700 dark:text-gray-205 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📥 Importer Roster PDF
+              </button>
+              
+              <button
+                onClick={() => exportMembersToPdf(members, clubs, leagues)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-[#22B8A7]/20 bg-[#22B8A7]/10 text-[#22B8A7] hover:bg-[#22B8A7]/20 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📤 Exporter Roster PDF
+              </button>
+
+              <button
+                onClick={() => { resetForm(); setShowAddForm(true); }}
+                className="bg-[#22B8A7] hover:bg-[#1da192] text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                id="btn-trigger-addmember-form"
+              >
+                <Plus className="w-4 h-4" /> Ajouter un Membre
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ADD/EDIT FORM */}
@@ -730,6 +752,19 @@ export default function MembersView({
           </div>
         </div>
       )}
+
+      <PdfImportModal 
+        isOpen={isImportOpen} 
+        onClose={() => setIsImportOpen(false)} 
+        section="membres" 
+        clubs={clubs}
+        leagues={leagues}
+        onImportComplete={(importedMembersList: any[]) => {
+          if (Array.isArray(importedMembersList)) {
+            importedMembersList.forEach(m => addMember(m));
+          }
+        }} 
+      />
     </div>
   );
 }

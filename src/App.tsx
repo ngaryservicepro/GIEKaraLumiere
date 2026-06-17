@@ -488,6 +488,8 @@ export default function App() {
             isDarkMode={isDarkMode}
             onNavigate={setActiveTab}
             setSelectedMeeting={setSelectedMeeting}
+            alerts={alerts}
+            setAlerts={setAlerts}
           />
         )}
 

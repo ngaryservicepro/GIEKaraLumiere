@@ -17,6 +17,8 @@ import {
   X
 } from 'lucide-react';
 import { JournalEntry, CHART_OF_ACCOUNTS, AccountCode } from '../types';
+import { exportAccountingToPdf } from '../utils/pdfHelper';
+import PdfImportModal from './PdfImportModal';
 
 interface AccountingViewProps {
   journalEntries: JournalEntry[];
@@ -38,6 +40,7 @@ export default function AccountingView({
   
   const [activeSubTab, setActiveSubTab] = useState<AccountingSubTab>('journal');
   const [showPostForm, setShowPostForm] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Post entry states
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -165,22 +168,50 @@ export default function AccountingView({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Comptabilité GIE</h1>
           <p className={`text-sm ${textClass}`}>
             Outil intelligent d'écriture à double entrée, grand livre, balance de vérification, bilan de clôture et compte de résultat.
           </p>
         </div>
-        {canEdit && !showPostForm && (
-          <button
-            onClick={() => setShowPostForm(true)}
-            className="self-start sm:self-center bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors shadow-sm"
-            id="btn-add-accounting-entry"
-          >
-            <Plus className="w-4 h-4" /> Passer une Écriture
-          </button>
-        )}
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit && !showPostForm && (
+            <>
+              <button 
+                onClick={() => setIsImportOpen(true)}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#122e38] text-gray-700 dark:text-gray-205 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📥 Importer Facture PDF
+              </button>
+              
+              <button
+                onClick={() => exportAccountingToPdf(
+                  activeSubTab, 
+                  journalEntries, 
+                  grandLivreData, 
+                  balanceRows, 
+                  productsRows, 
+                  expensesRows, 
+                  assetRows, 
+                  liabilityRows
+                )}
+                className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border border-[#22B8A7]/20 bg-[#22B8A7]/10 text-[#22B8A7] hover:bg-[#22B8A7]/20 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                📤 Exporter Comptes PDF
+              </button>
+
+              <button
+                onClick={() => setShowPostForm(true)}
+                className="bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                id="btn-add-accounting-entry"
+              >
+                <Plus className="w-4 h-4" /> Passer une Écriture
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* POSTING ENTRY FORM */}
@@ -656,6 +687,16 @@ export default function AccountingView({
         </div>
       )}
 
+      <PdfImportModal 
+        isOpen={isImportOpen} 
+        onClose={() => setIsImportOpen(false)} 
+        section="comptabilite" 
+        onImportComplete={(importedJournalEntries: any[]) => {
+          if (Array.isArray(importedJournalEntries)) {
+            importedJournalEntries.forEach(entry => addJournalEntry(entry));
+          }
+        }} 
+      />
     </div>
   );
 }
