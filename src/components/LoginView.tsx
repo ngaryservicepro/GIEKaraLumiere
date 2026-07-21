@@ -11,14 +11,9 @@ import {
   EyeOff, 
   ShieldCheck, 
   LogIn, 
-  CheckCircle2, 
   AlertCircle,
   Sun,
   Moon,
-  Building2,
-  Users,
-  Award,
-  Sparkles,
   HelpCircle
 } from 'lucide-react';
 import { AccessAccount, UserRole } from '../types';
@@ -54,7 +49,7 @@ export default function LoginView({
       // Find matching account in accessAccounts
       const cleanEmail = email.trim().toLowerCase();
       const account = accessAccounts.find(
-        acc => acc.email.toLowerCase() === cleanEmail && (acc.password === password || password === 'admin')
+        acc => acc.email.toLowerCase() === cleanEmail && (acc.password === password || (cleanEmail === 'ngaryservicepro@gmail.com' && password === 'admin'))
       );
 
       if (account) {
@@ -65,20 +60,10 @@ export default function LoginView({
         }
         onLoginSuccess(account);
       } else {
-        setError('Adresse e-mail ou mot de passe incorrect. Vous pouvez choisir un compte de démonstration ci-dessous.');
+        setError('Adresse e-mail ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
         setIsLoading(false);
       }
     }, 600);
-  };
-
-  const handleQuickDemoLogin = (acc: AccessAccount) => {
-    setEmail(acc.email);
-    setPassword(acc.password || 'admin');
-    setError(null);
-    setIsLoading(true);
-    setTimeout(() => {
-      onLoginSuccess(acc);
-    }, 400);
   };
 
   return (
@@ -254,35 +239,23 @@ export default function LoginView({
               </button>
             </form>
 
-            {/* Quick Demo Login Accounts Section */}
-            <div className="mt-6 pt-5 border-t border-white/10">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-bold text-[#22B8A7] uppercase tracking-wider font-mono flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  Accès Rapides Démo (Un Clic)
-                </span>
-                <span className="text-[10px] text-gray-400">Choisis un profil</span>
+            {/* Official Credentials Notice */}
+            <div className="mt-6 pt-5 border-t border-white/10 space-y-3">
+              <div className="p-3 bg-[#13323e]/70 border border-[#22B8A7]/30 rounded-xl text-xs space-y-1">
+                <p className="font-bold text-[#22B8A7] flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" />
+                  Identifiants Administrateur Principal
+                </p>
+                <p className="text-gray-300 font-mono text-[11px]">
+                  E-mail : <span className="text-white font-bold">ngaryservicepro@gmail.com</span>
+                </p>
+                <p className="text-gray-300 font-mono text-[11px]">
+                  Mot de passe : <span className="text-white font-bold">admin</span>
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {accessAccounts.slice(0, 4).map((acc) => (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    onClick={() => handleQuickDemoLogin(acc)}
-                    className="p-2.5 bg-[#13323e]/60 hover:bg-[#1a4252] border border-[#22B8A7]/20 hover:border-[#22B8A7]/60 rounded-xl text-left transition-all group flex flex-col justify-between active:scale-95"
-                  >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-[10px] font-bold text-[#22B8A7] group-hover:text-white transition-colors truncate">
-                        {acc.role}
-                      </span>
-                      <CheckCircle2 className="w-3 h-3 text-gray-500 group-hover:text-emerald-400 shrink-0" />
-                    </div>
-                    <span className="text-[11px] text-white font-semibold truncate w-full">
-                      {acc.fullName}
-                    </span>
-                  </button>
-                ))}
+              <div className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-[11px] text-gray-300 leading-relaxed">
+                💡 <span className="font-semibold text-white">Création d'accès membre :</span> Lorsqu'un administrateur crée un compte d'accès dans l'onglet <strong className="text-[#22B8A7]">Gestion des Accès & Sécurité</strong>, le membre concerné peut immédiatement s'en servir pour se connecter ici avec son e-mail et son mot de passe.
               </div>
             </div>
 
@@ -322,7 +295,7 @@ export default function LoginView({
             </div>
             
             <p className="text-xs text-gray-300 leading-relaxed">
-              Pour réinitialiser votre mot de passe, vous pouvez utiliser l'un des boutons d'<strong>Accès Rapide Démo</strong> sur l'écran de connexion ou contacter directement le <strong>Super Administrateur</strong> via la section Sécurité du portail.
+              Pour réinitialiser votre mot de passe, veuillez contacter directement le <strong>Super Administrateur</strong> ou le Secrétariat du GIE Kara Lumière pour qu'un nouvel accès vous soit généré depuis le module de Sécurité.
             </p>
 
             <button
