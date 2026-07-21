@@ -1,5 +1,5 @@
 {
-  "name": "GIE Kara Lumier",
+  "name": "GIE Kara Lumière",
   "description": "Plateforme Intelligente de Gestion Administrative, Financière et Sociale",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
