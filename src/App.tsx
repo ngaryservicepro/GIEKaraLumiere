@@ -35,6 +35,7 @@ import DocumentsView from './components/DocumentsView';
 import HumanResourcesView from './components/HumanResourcesView';
 import AlertsView from './components/AlertsView';
 import SecurityView from './components/SecurityView';
+import LoginView from './components/LoginView';
 import gieLogo from './assets/images/gie_logo_1781655966296.jpg';
 
 export default function App() {
@@ -100,6 +101,10 @@ export default function App() {
   const [alerts, setAlerts] = useState<IntelligentAlert[]>(() => {
     const saved = localStorage.getItem('kl_alerts');
     return saved ? JSON.parse(saved) : [];
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('kl_is_authenticated') === 'true';
   });
 
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>(() => {
@@ -212,6 +217,22 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  const handleLoginSuccess = (account: AccessAccount) => {
+    setIsAuthenticated(true);
+    setCurrentUserRole(account.role);
+    setCurrentUserEmail(account.email);
+    localStorage.setItem('kl_is_authenticated', 'true');
+    localStorage.setItem('kl_user_role', account.role);
+    localStorage.setItem('kl_user_email', account.email);
+    logAction("Connexion Utilisateur", `Connexion réussie de ${account.fullName} (${account.role})`);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('kl_is_authenticated');
+    logAction("Déconnexion Utilisateur", `Déconnexion de l'utilisateur ${currentUserEmail}`);
+  };
 
   useEffect(() => {
     localStorage.setItem('kl_initial_liquidity', String(initialLiquidity));
@@ -570,6 +591,17 @@ export default function App() {
     setAlerts([]);
   };
 
+  if (!isAuthenticated) {
+    return (
+      <LoginView 
+        accessAccounts={accessAccounts}
+        onLoginSuccess={handleLoginSuccess}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col lg:flex-row text-gray-900 dark:text-gray-100 ${isDarkMode ? 'bg-[#0a181d]' : 'bg-[#F5F7FA]'}`}>
       
@@ -614,6 +646,7 @@ export default function App() {
         setIsDarkMode={setIsDarkMode}
         alertsCount={alerts.filter(a => !a.isRead).length}
         isMobileOpen={mobileMenuOpen}
+        onLogout={handleLogout}
       />
 
       {/* Underlay Backdrop click to close menu on mobile */}

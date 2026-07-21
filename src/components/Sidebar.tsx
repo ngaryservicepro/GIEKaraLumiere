@@ -22,7 +22,8 @@ import {
   Lock,
   Compass,
   ChevronsLeft,
-  Menu
+  Menu,
+  LogOut
 } from 'lucide-react';
 import { UserRole } from '../types';
 import gieLogo from '../assets/images/gie_logo_1781655966296.jpg';
@@ -35,6 +36,7 @@ interface SidebarProps {
   setIsDarkMode: (val: boolean) => void;
   alertsCount: number;
   isMobileOpen?: boolean;
+  onLogout?: () => void;
 }
 
 export default function Sidebar({
@@ -44,7 +46,8 @@ export default function Sidebar({
   isDarkMode,
   setIsDarkMode,
   alertsCount,
-  isMobileOpen = false
+  isMobileOpen = false,
+  onLogout
 }: SidebarProps) {
   
   // Navigation Menu definition with corresponding icon and minimum role requirements
@@ -121,15 +124,26 @@ export default function Sidebar({
       {/* Role details & Theme Switcher on Bottom */}
       <div className="p-4 border-t border-[#22B8A7]/10 bg-[#0c222a] space-y-3">
         
-        {/* Dynamic Logged in User state with role */}
-        <div className="flex items-center gap-2.5 p-2.5 bg-[#173C4A]/40 rounded-xl border border-[#22B8A7]/10 shadow-inner">
-          <div className="w-8 h-8 rounded-lg bg-[#22B8A7] flex items-center justify-center font-display font-extrabold text-sm text-white shadow-xs">
-            {currentUserRole.charAt(0)}
+        {/* Dynamic Logged in User state with role & Logout button */}
+        <div className="flex items-center justify-between gap-2 p-2.5 bg-[#173C4A]/40 rounded-xl border border-[#22B8A7]/10 shadow-inner">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#22B8A7] flex items-center justify-center font-display font-extrabold text-sm text-white shadow-xs shrink-0">
+              {currentUserRole.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] text-[#22B8A7] font-bold uppercase tracking-widest font-mono">Périmètre Mandat</p>
+              <p className="text-[11px] font-display font-bold text-white truncate max-w-[110px]">{currentUserRole}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[9px] text-[#22B8A7] font-bold uppercase tracking-widest font-mono">Périmètre Mandat</p>
-            <p className="text-[11px] font-display font-bold text-white truncate max-w-[125px]">{currentUserRole}</p>
-          </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-1.5 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+              title="Se déconnecter"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Theme and system utilities */}
