@@ -69,6 +69,7 @@ export default function MembersView({
   const [cniNumber, setCniNumber] = useState('');
   const [profession, setProfession] = useState('');
   const [educationLevel, setEducationLevel] = useState('');
+  const [maritalStatus, setMaritalStatus] = useState<Member['maritalStatus']>('Célibataire');
   const [photoUrl, setPhotoUrl] = useState('');
   
   // CNI file temporary helper
@@ -167,6 +168,7 @@ export default function MembersView({
     setCniNumber('');
     setProfession('');
     setEducationLevel('');
+    setMaritalStatus('Célibataire');
     setPhotoUrl('');
     setCniFile(undefined);
     setCniError(null);
@@ -207,6 +209,7 @@ export default function MembersView({
       cniFile,
       profession,
       educationLevel,
+      maritalStatus,
       photoUrl
     };
 
@@ -239,6 +242,7 @@ export default function MembersView({
     setCniNumber(m.cniNumber);
     setProfession(m.profession || '');
     setEducationLevel(m.educationLevel || '');
+    setMaritalStatus(m.maritalStatus || 'Célibataire');
     setPhotoUrl(m.photoUrl || '');
     setCniFile(m.cniFile);
     setShowAddForm(true);
@@ -396,6 +400,21 @@ export default function MembersView({
                     </select>
                   </div>
                   <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Statut Matrimonial</label>
+                    <select 
+                      value={maritalStatus}
+                      onChange={(e) => setMaritalStatus(e.target.value as Member['maritalStatus'])}
+                      className={inputClass}
+                    >
+                      <option value="Célibataire">Célibataire</option>
+                      <option value="Marié(e)">Marié(e)</option>
+                      <option value="Divorcé(e)">Divorcé(e)</option>
+                      <option value="Veuf(ve)">Veuf(ve)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Date Naissance</label>
                     <input 
                       type="date" 
@@ -404,16 +423,16 @@ export default function MembersView({
                       className={inputClass}
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Lieu de Naissance</label>
-                  <input 
-                    type="text" 
-                    value={birthPlace}
-                    onChange={(e) => setBirthPlace(e.target.value)}
-                    className={inputClass}
-                    placeholder="Ex: Dakar, Sénégal"
-                  />
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Lieu de Naissance</label>
+                    <input 
+                      type="text" 
+                      value={birthPlace}
+                      onChange={(e) => setBirthPlace(e.target.value)}
+                      className={inputClass}
+                      placeholder="Ex: Dakar, Sénégal"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Téléphone</label>
@@ -707,9 +726,9 @@ export default function MembersView({
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-white">{m.fullName}</p>
                             <p className="text-xs text-gray-400">{m.phone || 'Aucun numéro'}</p>
-                            {(m.profession || m.educationLevel) && (
+                            {(m.profession || m.educationLevel || m.maritalStatus) && (
                               <p className="text-[11px] text-[#22B8A7] font-medium mt-0.5">
-                                {[m.profession, m.educationLevel].filter(Boolean).join(' • ')}
+                                {[m.maritalStatus, m.profession, m.educationLevel].filter(Boolean).join(' • ')}
                               </p>
                             )}
                           </div>
@@ -834,11 +853,12 @@ export default function MembersView({
                 <p className="font-bold text-sm text-gray-900 dark:text-white">{activeCniView.fullName}</p>
               </div>
               <div>
-                <p className="text-gray-400 font-medium">Sexe & Date de Naissance</p>
+                <p className="text-gray-400 font-medium">Sexe, Statut Matrimonial & Naissance</p>
                 <p className="font-semibold text-gray-800 dark:text-gray-200">
                   {activeCniView.gender === 'M' ? 'Masculin' : 'Féminin'}
-                  {activeCniView.birthDate ? ` • ${new Date(activeCniView.birthDate).toLocaleDateString('fr-FR')}` : ''}
-                  {activeCniView.birthPlace ? ` (${activeCniView.birthPlace})` : ''}
+                  {activeCniView.maritalStatus ? ` • ${activeCniView.maritalStatus}` : ''}
+                  {activeCniView.birthDate ? ` • Né(e) le ${new Date(activeCniView.birthDate).toLocaleDateString('fr-FR')}` : ''}
+                  {activeCniView.birthPlace ? ` à ${activeCniView.birthPlace}` : ''}
                 </p>
               </div>
               <div>

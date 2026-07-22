@@ -32,6 +32,7 @@ export interface Member {
   cniNumber: string; // Unique CNI number
   profession?: string; // Everyday life occupation
   educationLevel?: string; // Level of study / education level
+  maritalStatus?: 'Célibataire' | 'Marié(e)' | 'Divorcé(e)' | 'Veuf(ve)'; // Marital status
   photoUrl?: string; // Profile photo URL or base64 DataURL
   cniFile?: {
     name: string;

@@ -239,25 +239,7 @@ export default function LoginView({
               </button>
             </form>
 
-            {/* Official Credentials Notice */}
-            <div className="mt-6 pt-5 border-t border-white/10 space-y-3">
-              <div className="p-3 bg-[#13323e]/70 border border-[#22B8A7]/30 rounded-xl text-xs space-y-1">
-                <p className="font-bold text-[#22B8A7] flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" />
-                  Identifiants Administrateur Principal
-                </p>
-                <p className="text-gray-300 font-mono text-[11px]">
-                  E-mail : <span className="text-white font-bold">ngaryservicepro@gmail.com</span>
-                </p>
-                <p className="text-gray-300 font-mono text-[11px]">
-                  Mot de passe : <span className="text-white font-bold">admin</span>
-                </p>
-              </div>
 
-              <div className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-[11px] text-gray-300 leading-relaxed">
-                💡 <span className="font-semibold text-white">Création d'accès membre :</span> Lorsqu'un administrateur crée un compte d'accès dans l'onglet <strong className="text-[#22B8A7]">Gestion des Accès & Sécurité</strong>, le membre concerné peut immédiatement s'en servir pour se connecter ici avec son e-mail et son mot de passe.
-              </div>
-            </div>
 
           </div>
 

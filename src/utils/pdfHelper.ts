@@ -244,10 +244,10 @@ export function exportMembersToPdf(members: Member[], clubs: Club[], leagues: Le
       m.id,
       m.fullName,
       m.cniNumber,
+      m.maritalStatus || 'Célibataire',
       m.phone,
-      m.email,
+      m.profession || 'Inconnue',
       `${club} (${league})`,
-      m.grade,
       m.function,
       m.status
     ];
@@ -255,7 +255,7 @@ export function exportMembersToPdf(members: Member[], clubs: Club[], leagues: Le
 
   autoTable(doc, {
     startY: 48,
-    head: [['ID Matricule', 'Nom Complet', 'N° CNI', 'Téléphone', 'Email de Secours', 'Club & Ligue Affiliée', 'Grade', 'Fonctions', 'Statut']],
+    head: [['ID Matricule', 'Nom Complet', 'N° CNI', 'Statut Matrimonial', 'Téléphone', 'Profession', 'Club & Ligue Affiliée', 'Fonctions', 'Statut']],
     body: tableBody,
     theme: 'grid',
     headStyles: { fillColor: COLOR_PRIMARY, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
