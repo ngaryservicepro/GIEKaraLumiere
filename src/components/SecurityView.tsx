@@ -116,34 +116,38 @@ export default function SecurityView({
 
   const handleCreateAccess = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFullName || !newEmail || !newPassword) {
+    const cleanName = newFullName.trim();
+    const cleanEmail = newEmail.trim().toLowerCase();
+    const cleanPassword = newPassword.trim();
+
+    if (!cleanName || !cleanEmail || !cleanPassword) {
       alert("Veuillez renseigner tous les champs obligatoires.");
       return;
     }
 
-    if (accessAccounts.some(acc => acc.email.toLowerCase() === newEmail.toLowerCase())) {
+    if (accessAccounts.some(acc => acc.email.trim().toLowerCase() === cleanEmail)) {
       alert("Un compte avec cette adresse email existe déjà.");
       return;
     }
 
     const newAcc: AccessAccount = {
       id: 'ACC-' + Math.floor(1000 + Math.random() * 9000),
-      fullName: newFullName,
-      email: newEmail,
+      fullName: cleanName,
+      email: cleanEmail,
       role: newRole,
-      password: newPassword,
+      password: cleanPassword,
       status: 'Actif'
     };
 
     setAccessAccounts([...accessAccounts, newAcc]);
-    logAction("Création de Compte", `Création de l'accès pour "${newFullName}" (${newEmail}) avec le rôle "${newRole}".`, "Succès");
+    logAction("Création de Compte", `Création de l'accès pour "${cleanName}" (${cleanEmail}) avec le rôle "${newRole}".`, "Succès");
     
     // Reset form
     setNewFullName('');
     setNewEmail('');
     setNewPassword('');
     setNewRole('Membre');
-    alert(`Compte d'accès créé avec succès pour ${newFullName} !`);
+    alert(`Compte d'accès créé avec succès pour ${cleanName} !\n\nIdentifiants de connexion :\n- E-mail : ${cleanEmail}\n- Mot de passe : ${cleanPassword}`);
   };
 
   const handleRevokeAccess = (id: string, name: string, email: string) => {

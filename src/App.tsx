@@ -209,6 +209,14 @@ export default function App() {
   }, [currentUserRole]);
 
   useEffect(() => {
+    localStorage.setItem('kl_access_accounts', JSON.stringify(accessAccounts));
+  }, [accessAccounts]);
+
+  useEffect(() => {
+    localStorage.setItem('kl_audit_logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
+
+  useEffect(() => {
     localStorage.setItem('kl_dark_mode', String(isDarkMode));
     // Apply class to index HTML element
     if (isDarkMode) {

@@ -32,10 +32,10 @@ export default function LoginView({
   isDarkMode,
   setIsDarkMode
 }: LoginViewProps) {
-  const [email, setEmail] = useState('ngaryservicepro@gmail.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
@@ -48,9 +48,26 @@ export default function LoginView({
     setTimeout(() => {
       // Find matching account in accessAccounts
       const cleanEmail = email.trim().toLowerCase();
-      const account = accessAccounts.find(
-        acc => acc.email.toLowerCase() === cleanEmail && (acc.password === password || (cleanEmail === 'ngaryservicepro@gmail.com' && password === 'admin'))
-      );
+      const cleanPassword = password.trim();
+
+      const account = accessAccounts.find(acc => {
+        const accEmail = (acc.email || '').trim().toLowerCase();
+        const accPassword = (acc.password || '').trim();
+
+        if (accEmail !== cleanEmail) return false;
+
+        // Super Admin bypass shortcut
+        if (cleanEmail === 'ngaryservicepro@gmail.com' && (cleanPassword === 'admin' || accPassword === cleanPassword)) {
+          return true;
+        }
+
+        // Standard account password match (or default 'admin' if no password was set)
+        if (accPassword) {
+          return accPassword === cleanPassword;
+        } else {
+          return cleanPassword === 'admin';
+        }
+      });
 
       if (account) {
         if (account.status === 'Inactif') {
@@ -160,7 +177,7 @@ export default function LoginView({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ex: ngaryservicepro@gmail.com"
+                    placeholder="ex: nom@exemple.com"
                     className="w-full pl-10 pr-4 py-3 bg-[#13323e]/80 border border-[#22B8A7]/30 rounded-xl text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#22B8A7] focus:ring-2 focus:ring-[#22B8A7]/20 transition-all"
                   />
                   <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
