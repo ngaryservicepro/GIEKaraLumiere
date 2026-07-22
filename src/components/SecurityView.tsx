@@ -24,7 +24,10 @@ import {
   Mail,
   Search,
   Eye,
-  EyeOff
+  EyeOff,
+  Pencil,
+  X,
+  Save
 } from 'lucide-react';
 import { UserRole, AccessAccount, AuditLog } from '../types';
 
@@ -86,6 +89,67 @@ export default function SecurityView({
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
   const [accSearchTerm, setAccSearchTerm] = useState('');
   const [logSearchTerm, setLogSearchTerm] = useState('');
+
+  // Edit account modal states
+  const [editingAccount, setEditingAccount] = useState<AccessAccount | null>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState<UserRole>('Membre');
+  const [editPassword, setEditPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
+
+  const handleOpenEdit = (acc: AccessAccount) => {
+    setEditingAccount(acc);
+    setEditFullName(acc.fullName);
+    setEditEmail(acc.email);
+    setEditRole(acc.role);
+    setEditPassword(acc.password || '');
+    setShowEditPassword(false);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccount) return;
+
+    const cleanName = editFullName.trim();
+    const cleanEmail = editEmail.trim().toLowerCase();
+    const cleanPassword = editPassword.trim();
+
+    if (!cleanName || !cleanEmail || !cleanPassword) {
+      alert("Veuillez renseigner tous les champs obligatoires.");
+      return;
+    }
+
+    const duplicate = accessAccounts.some(
+      acc => acc.id !== editingAccount.id && acc.email.trim().toLowerCase() === cleanEmail
+    );
+
+    if (duplicate) {
+      alert("Un autre compte d'accès utilise déjà cette adresse e-mail.");
+      return;
+    }
+
+    const updatedAcc: AccessAccount = {
+      ...editingAccount,
+      fullName: cleanName,
+      email: cleanEmail,
+      role: editRole,
+      password: cleanPassword
+    };
+
+    setAccessAccounts(prev => prev.map(a => a.id === editingAccount.id ? updatedAcc : a));
+
+    // If editing currently logged in user account, sync current email and role in active session
+    if (editingAccount.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) {
+      setCurrentUserEmail(cleanEmail);
+      setCurrentUserRole(editRole);
+    }
+
+    logAction("Modification de Compte", `Mise à jour de l'accès pour "${cleanName}" (${cleanEmail}) - Rôle: ${editRole}.`, "Succès");
+    
+    alert(`L'accès de ${cleanName} a été modifié avec succès !`);
+    setEditingAccount(null);
+  };
 
   const roles: UserRole[] = [
     'Super Administrateur',
@@ -603,14 +667,25 @@ export default function SecurityView({
                         </button>
                       </div>
 
-                      {acc.email !== currentUserEmail && (
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleRevokeAccess(acc.id, acc.fullName, acc.email)}
-                          className="text-[10px] text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors flex items-center gap-1.5 py-1 px-2 hover:bg-red-500/10 rounded font-semibold cursor-pointer"
+                          type="button"
+                          onClick={() => handleOpenEdit(acc)}
+                          className="text-[10px] text-[#22B8A7] hover:text-[#1ea091] hover:bg-[#22B8A7]/10 transition-colors flex items-center gap-1 py-1 px-2 rounded font-semibold cursor-pointer border border-[#22B8A7]/30"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Révoquer l'accès
+                          <Pencil className="w-3.5 h-3.5" /> Modifier
                         </button>
-                      )}
+
+                        {acc.email !== currentUserEmail && (
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeAccess(acc.id, acc.fullName, acc.email)}
+                            className="text-[10px] text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors flex items-center gap-1 py-1 px-2 hover:bg-red-500/10 rounded font-semibold cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Révoquer
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -618,6 +693,107 @@ export default function SecurityView({
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* EDIT ACCESS ACCOUNT MODAL */}
+      {editingAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className={`w-full max-w-md p-6 rounded-2xl border shadow-2xl ${cardBgClass} space-y-4 relative`}>
+            <div className="flex items-center justify-between border-b pb-3 border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-2 text-[#22B8A7]">
+                <Pencil className="w-5 h-5" />
+                <h3 className={`font-bold text-base ${headingClass}`}>Modifier l'Accès</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingAccount(null)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Nom complet *</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    value={editFullName}
+                    onChange={(e) => setEditFullName(e.target.value)}
+                    className={`${inputClass} pl-9`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">E-mail / Identifiant de connexion *</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    required
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className={`${inputClass} pl-9`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Rôle administratif *</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as UserRole)}
+                  className={inputClass}
+                >
+                  {roles.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Mot de passe / Clé d'accès *</label>
+                <div className="relative">
+                  <Key className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <input
+                    type={showEditPassword ? 'text' : 'password'}
+                    required
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className={`${inputClass} pl-9 pr-10`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword(!showEditPassword)}
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingAccount(null)}
+                  className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#22B8A7] hover:bg-[#1ea091] text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Save className="w-4 h-4" /> Enregistrer les modifications
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
