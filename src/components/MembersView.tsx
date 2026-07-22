@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   X,
   User,
-  ShieldAlert
+  ShieldAlert,
+  Camera
 } from 'lucide-react';
 import { Member, Club, League } from '../types';
 import { exportMembersToPdf } from '../utils/pdfHelper';
@@ -68,11 +69,31 @@ export default function MembersView({
   const [cniNumber, setCniNumber] = useState('');
   const [profession, setProfession] = useState('');
   const [educationLevel, setEducationLevel] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   
   // CNI file temporary helper
   const [cniFile, setCniFile] = useState<Member['cniFile'] | undefined>(undefined);
   const [cniError, setCniError] = useState<string | null>(null);
   const [cniSuccess, setCniSuccess] = useState<string | null>(null);
+
+  // Photo Upload Helper
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La photo de profil ne doit pas dépasser 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setPhotoUrl(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // View CNI modal
   const [activeCniView, setActiveCniView] = useState<Member | null>(null);
@@ -146,6 +167,7 @@ export default function MembersView({
     setCniNumber('');
     setProfession('');
     setEducationLevel('');
+    setPhotoUrl('');
     setCniFile(undefined);
     setCniError(null);
     setCniSuccess(null);
@@ -184,7 +206,8 @@ export default function MembersView({
       cniNumber,
       cniFile,
       profession,
-      educationLevel
+      educationLevel,
+      photoUrl
     };
 
     if (editingMember) {
@@ -216,6 +239,7 @@ export default function MembersView({
     setCniNumber(m.cniNumber);
     setProfession(m.profession || '');
     setEducationLevel(m.educationLevel || '');
+    setPhotoUrl(m.photoUrl || '');
     setCniFile(m.cniFile);
     setShowAddForm(true);
   };
@@ -295,6 +319,59 @@ export default function MembersView({
               {/* CIVIL STATE INFO */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#22B8A7]">1. État Civil & Identité</h3>
+                
+                {/* Photo de profil Field */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                    <Camera className="w-3.5 h-3.5 text-[#22B8A7]" />
+                    Photo de Profil du Membre
+                  </label>
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 border-2 border-[#22B8A7]/40 shadow-xs relative group">
+                      {photoUrl ? (
+                        <img 
+                          src={photoUrl} 
+                          alt="Aperçu Photo" 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <Camera className="w-6 h-6 text-gray-400" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer px-3 py-1.5 bg-[#22B8A7] hover:bg-[#1fa192] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Choisir une photo</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handlePhotoUpload} 
+                            className="hidden" 
+                          />
+                        </label>
+                        {photoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPhotoUrl('')}
+                            className="px-2 py-1.5 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors font-medium"
+                          >
+                            Supprimer
+                          </button>
+                        )}
+                      </div>
+                      <input 
+                        type="url" 
+                        value={photoUrl}
+                        onChange={(e) => setPhotoUrl(e.target.value)}
+                        placeholder="Ou collez l'URL d'une image (ex: https://...)"
+                        className="w-full text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Nom Complet *</label>
                   <input 
@@ -620,8 +697,12 @@ export default function MembersView({
                       </td>
                       <td className="p-3 whitespace-nowrap">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-gray-700 dark:text-gray-300">
-                            {m.fullName.charAt(0).toUpperCase()}
+                          <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-gray-700 dark:text-gray-300 overflow-hidden shrink-0 border border-[#22B8A7]/30 shadow-xs">
+                            {m.photoUrl ? (
+                              <img src={m.photoUrl} alt={m.fullName} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{m.fullName.charAt(0).toUpperCase()}</span>
+                            )}
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-white">{m.fullName}</p>
@@ -726,13 +807,25 @@ export default function MembersView({
               <X className="w-5 h-5" />
             </button>
             
-            <h3 className="text-lg font-bold text-[#173C4A] dark:text-white mb-1 flex items-center gap-2">
-              <User className="w-5 h-5 text-[#22B8A7]" />
-              Fiche Individuelle d'Adhérent
-            </h3>
-            <p className="text-xs text-gray-400 mb-4 font-semibold uppercase tracking-wider">
-              ID GIE : <span className="font-mono text-[#22B8A7] font-bold">{activeCniView.id}</span>
-            </p>
+            <div className="flex items-center gap-4 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-lg text-gray-700 dark:text-gray-200 shrink-0 border-2 border-[#22B8A7] shadow-sm">
+                {activeCniView.photoUrl ? (
+                  <img src={activeCniView.photoUrl} alt={activeCniView.fullName} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{activeCniView.fullName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#173C4A] dark:text-white flex items-center gap-2">
+                  {activeCniView.fullName}
+                </h3>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mt-0.5">
+                  ID GIE : <span className="font-mono text-[#22B8A7] font-bold">{activeCniView.id}</span> • <span className={
+                    activeCniView.status === 'Actif' ? 'text-emerald-500 font-bold' : 'text-rose-500 font-bold'
+                  }>{activeCniView.status}</span>
+                </p>
+              </div>
+            </div>
 
             {/* Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-gray-50 dark:bg-gray-850 p-4 rounded-xl border border-gray-150 dark:border-gray-800 text-xs mb-5">
