@@ -101,6 +101,63 @@ export default function SecurityView({
   const [editPassword, setEditPassword] = useState('');
   const [showEditPassword, setShowEditPassword] = useState(false);
 
+  // Personal account password management states
+  const myAccount = accessAccounts.find(a => a.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) || {
+    id: 'ACC-001',
+    fullName: 'Aliou Cissé',
+    email: currentUserEmail,
+    role: currentUserRole,
+    password: 'admin',
+    status: 'Actif'
+  };
+
+  const [myPassword, setMyPassword] = useState(myAccount.password || '');
+  const [showMyPassword, setShowMyPassword] = useState(false);
+  const [myPasswordSuccess, setMyPasswordSuccess] = useState(false);
+
+  const handleUpdateMyPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myPassword.trim()) {
+      alert("Veuillez saisir un mot de passe valide.");
+      return;
+    }
+
+    const cleanPassword = myPassword.trim();
+    const updatedAcc: AccessAccount = {
+      ...myAccount,
+      fullName: myAccount.fullName || "Aliou Cissé",
+      email: currentUserEmail,
+      role: currentUserRole,
+      password: cleanPassword
+    };
+
+    const newAccounts = accessAccounts.some(a => a.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase())
+      ? accessAccounts.map(a => a.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase() ? updatedAcc : a)
+      : [...accessAccounts, updatedAcc];
+
+    setAccessAccounts(newAccounts);
+    localStorage.setItem('kl_access_accounts', JSON.stringify(newAccounts));
+
+    try {
+      await fetch('/api/accounts/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: currentUserEmail,
+          password: cleanPassword,
+          fullName: updatedAcc.fullName,
+          role: currentUserRole
+        })
+      });
+    } catch (err) {
+      console.error("Error updating password on server:", err);
+    }
+
+    logAction("Modification Mot de Passe", `Mise à jour réussie du mot de passe pour ${currentUserEmail}.`, "Succès");
+    setMyPasswordSuccess(true);
+    setTimeout(() => setMyPasswordSuccess(false), 5000);
+  };
+
   const handleOpenEdit = (acc: AccessAccount) => {
     if (!isSuperAdmin) {
       alert("Action refusée : Seul le Super Administrateur (Aliou Cissé) est autorisé à modifier les accès et à attribuer des pouvoirs aux autres membres.");
@@ -149,17 +206,32 @@ export default function SecurityView({
       password: cleanPassword
     };
 
-    setAccessAccounts(prev => prev.map(a => a.id === editingAccount.id ? updatedAcc : a));
+    const newAccounts = accessAccounts.map(a => a.id === editingAccount.id ? updatedAcc : a);
+    setAccessAccounts(newAccounts);
+    localStorage.setItem('kl_access_accounts', JSON.stringify(newAccounts));
+
+    // Persist immediately on backend server
+    fetch('/api/accounts/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: cleanEmail,
+        password: cleanPassword,
+        fullName: cleanName,
+        role: editRole
+      })
+    }).catch(err => console.error("Error updating account on server:", err));
 
     // If editing currently logged in user account, sync current email and role in active session
     if (editingAccount.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) {
       setCurrentUserEmail(cleanEmail);
       setCurrentUserRole(editRole);
+      setMyPassword(cleanPassword);
     }
 
     logAction("Modification de Compte", `Mise à jour de l'accès pour "${cleanName}" (${cleanEmail}) - Rôle: ${editRole}.`, "Succès");
     
-    alert(`L'accès et les pouvoirs de ${cleanName} ont été mis à jour avec succès !`);
+    alert(`L'accès et les pouvoirs de ${cleanName} ont été mis à jour avec succès ! Le mot de passe a bien été enregistré.`);
     setEditingAccount(null);
   };
 
@@ -483,6 +555,57 @@ export default function SecurityView({
 
           {/* BACKUP & 2FA COLUMN */}
           <div className="space-y-6">
+            {/* PERSONAL PASSWORD UPDATE CARD */}
+            <div className={`p-6 rounded-xl border ${cardBgClass} space-y-4 border-[#22B8A7]/40 shadow-sm`}>
+              <div className="flex items-center gap-2 text-[#22B8A7]">
+                <Key className="w-5 h-5" />
+                <h3 className={`font-bold text-sm ${headingClass}`}>Mon Profil & Mot de Passe</h3>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Identifiant : <strong className="text-[#22B8A7]">{currentUserEmail}</strong> ({currentUserRole})
+              </p>
+
+              <form onSubmit={handleUpdateMyPassword} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    Nouveau Mot de Passe / Clé d'accès
+                  </label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    <input
+                      type={showMyPassword ? 'text' : 'password'}
+                      required
+                      value={myPassword}
+                      onChange={(e) => setMyPassword(e.target.value)}
+                      placeholder="Saisissez votre nouveau mot de passe"
+                      className={`${inputClass} pl-9 pr-10 text-xs`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowMyPassword(!showMyPassword)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                    >
+                      {showMyPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-[#22B8A7] hover:bg-[#1ea091] text-white font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Save className="w-4 h-4" /> Enregistrer mon nouveau mot de passe
+                </button>
+              </form>
+
+              {myPasswordSuccess && (
+                <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-semibold flex items-center gap-2 animate-pulse">
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>Votre nouveau mot de passe a été enregistré avec succès !</span>
+                </div>
+              )}
+            </div>
+
             <div className={`p-6 rounded-xl border ${cardBgClass} space-y-4`}>
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-[#22B8A7]" />

@@ -89,6 +89,28 @@ async function startServer() {
     }
   });
 
+  // POST Update Single Account (e.g. Password or Details)
+  app.post("/api/accounts/update", (req, res) => {
+    const { email, password, fullName, role } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required" });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const accounts = readAccounts();
+    const index = accounts.findIndex((a: any) => (a.email || "").trim().toLowerCase() === cleanEmail);
+
+    if (index !== -1) {
+      if (password !== undefined) accounts[index].password = password;
+      if (fullName !== undefined) accounts[index].fullName = fullName;
+      if (role !== undefined) accounts[index].role = role;
+      writeAccounts(accounts);
+      return res.json({ success: true, account: accounts[index], accounts });
+    } else {
+      return res.status(404).json({ success: false, error: "Account not found" });
+    }
+  });
+
   // POST Create or Update Single Account
   app.post("/api/accounts", (req, res) => {
     const { fullName, email, role, password, status } = req.body;

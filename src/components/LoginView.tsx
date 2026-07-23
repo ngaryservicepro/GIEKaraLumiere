@@ -56,11 +56,6 @@ export default function LoginView({
 
         if (accEmail !== cleanEmail) return false;
 
-        // Super Admin bypass shortcut
-        if (cleanEmail === 'ngaryservicepro@gmail.com' && (cleanPassword === 'admin' || accPassword === cleanPassword || password === 'admin')) {
-          return true;
-        }
-
         // Standard account password match
         if (accPassword) {
           return accPassword === cleanPassword || acc.password === password;
@@ -69,7 +64,24 @@ export default function LoginView({
         }
       });
 
-      // Fallback for default system accounts in case of cross-session local storage latency
+      // Fallback to localStorage if state is out of sync
+      if (!account) {
+        try {
+          const saved = localStorage.getItem('kl_access_accounts');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            account = parsed.find((acc: any) => {
+              const accEmail = (acc.email || '').trim().toLowerCase();
+              const accPassword = (acc.password || '').trim();
+              return accEmail === cleanEmail && (accPassword === cleanPassword || acc.password === password);
+            });
+          }
+        } catch (e) {
+          console.error("Error reading saved accounts in login fallback:", e);
+        }
+      }
+
+      // Hardcoded fallback for default system accounts if no custom password set
       if (!account) {
         if (cleanEmail === 'racinesy1990@gmail.com' && (cleanPassword === '123456789@' || password === '123456789@' || cleanPassword === 'admin')) {
           account = { id: 'ACC-002', fullName: "Racine Sy", email: "racinesy1990@gmail.com", role: "Membre", password: "123456789@", status: "Actif" };
