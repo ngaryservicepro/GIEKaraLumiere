@@ -32,6 +32,7 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   currentUserRole: UserRole;
+  currentUserEmail?: string;
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
   alertsCount: number;
@@ -43,6 +44,7 @@ export default function Sidebar({
   activeTab,
   setActiveTab,
   currentUserRole,
+  currentUserEmail = '',
   isDarkMode,
   setIsDarkMode,
   alertsCount,
@@ -50,8 +52,13 @@ export default function Sidebar({
   onLogout
 }: SidebarProps) {
   
+  const isSuperAdmin = currentUserRole === 'Super Administrateur' || currentUserEmail.trim().toLowerCase() === 'ngaryservicepro@gmail.com';
+
+  // Restricted sections reserved strictly for the Super Administrateur (Aliou Cissé)
+  const restrictedTabs = ['documents', 'rh', 'alerts', 'security'];
+
   // Navigation Menu definition with corresponding icon and minimum role requirements
-  const menuItems = [
+  const allMenuItems = [
     { id: 'dashboard', label: 'Tableau de Bord', icon: BarChart },
     { id: 'members', label: 'Gestion Membres', icon: Users },
     { id: 'clubs', label: 'Clubs Affiliés', icon: Home },
@@ -67,6 +74,13 @@ export default function Sidebar({
     { id: 'alerts', label: 'Alertes', icon: Bell, badge: alertsCount > 0 ? alertsCount : undefined },
     { id: 'security', label: 'Sécurité & Droits', icon: Shield },
   ];
+
+  const menuItems = allMenuItems.filter(item => {
+    if (restrictedTabs.includes(item.id)) {
+      return isSuperAdmin;
+    }
+    return true;
+  });
 
   return (
     <aside 

@@ -637,6 +637,15 @@ export default function App() {
     setAlerts([]);
   };
 
+  const isSuperAdmin = currentUserRole === 'Super Administrateur' || currentUserEmail.trim().toLowerCase() === 'ngaryservicepro@gmail.com';
+  const restrictedTabs = ['documents', 'rh', 'alerts', 'security'];
+
+  useEffect(() => {
+    if (!isSuperAdmin && restrictedTabs.includes(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [isSuperAdmin, activeTab]);
+
   if (!isAuthenticated) {
     return (
       <LoginView 
@@ -688,6 +697,7 @@ export default function App() {
           setMobileMenuOpen(false); // Auto close mobile menu after selection
         }}
         currentUserRole={currentUserRole}
+        currentUserEmail={currentUserEmail}
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
         alertsCount={alerts.filter(a => !a.isRead).length}
@@ -839,7 +849,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'documents' && (
+        {activeTab === 'documents' && isSuperAdmin && (
           <DocumentsView 
             documents={documents}
             addDocument={addDocument}
@@ -849,7 +859,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'rh' && (
+        {activeTab === 'rh' && isSuperAdmin && (
           <HumanResourcesView 
             employees={employees}
             addEmployee={addEmployee}
@@ -859,7 +869,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'alerts' && (
+        {activeTab === 'alerts' && isSuperAdmin && (
           <AlertsView 
             alerts={alerts}
             markAsRead={markAsRead}
@@ -868,7 +878,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'security' && (
+        {activeTab === 'security' && isSuperAdmin && (
           <SecurityView 
             currentUserRole={currentUserRole} 
             setCurrentUserRole={setCurrentUserRole}
