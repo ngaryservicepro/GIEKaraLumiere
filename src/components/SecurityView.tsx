@@ -75,6 +75,9 @@ export default function SecurityView({
   databaseStats
 }: SecurityViewProps) {
   
+  // Exclusive Master Admin permission check (Ngary Sow / Super Administrateur)
+  const isSuperAdmin = currentUserRole === 'Super Administrateur' || currentUserEmail.trim().toLowerCase() === 'ngaryservicepro@gmail.com';
+
   const [securitySection, setSecuritySection] = useState<'roles' | 'comptes' | 'logs'>('roles');
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -99,6 +102,10 @@ export default function SecurityView({
   const [showEditPassword, setShowEditPassword] = useState(false);
 
   const handleOpenEdit = (acc: AccessAccount) => {
+    if (!isSuperAdmin) {
+      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) est autorisé à modifier les accès et à attribuer des pouvoirs aux autres membres.");
+      return;
+    }
     setEditingAccount(acc);
     setEditFullName(acc.fullName);
     setEditEmail(acc.email);
@@ -110,6 +117,11 @@ export default function SecurityView({
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingAccount) return;
+
+    if (!isSuperAdmin) {
+      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) a l'exclusivité d'attribuer des pouvoirs et de modifier les identifiants.");
+      return;
+    }
 
     const cleanName = editFullName.trim();
     const cleanEmail = editEmail.trim().toLowerCase();
@@ -147,7 +159,7 @@ export default function SecurityView({
 
     logAction("Modification de Compte", `Mise à jour de l'accès pour "${cleanName}" (${cleanEmail}) - Rôle: ${editRole}.`, "Succès");
     
-    alert(`L'accès de ${cleanName} a été modifié avec succès !`);
+    alert(`L'accès et les pouvoirs de ${cleanName} ont été mis à jour avec succès !`);
     setEditingAccount(null);
   };
 
@@ -195,6 +207,10 @@ export default function SecurityView({
   ];
 
   const handleRoleToggle = (role: UserRole) => {
+    if (!isSuperAdmin) {
+      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) a le pouvoir d'attribuer des rôles et de modifier les privilèges d'accès.");
+      return;
+    }
     setCurrentUserRole(role);
     // Automatically match the simulated login email if it's in access accounts
     const matchingAcc = accessAccounts.find(acc => acc.role === role);
@@ -205,7 +221,7 @@ export default function SecurityView({
     setTimeout(() => {
       setShowNotification(false);
     }, 2500);
-    logAction("Changement de Rôle Actif", `Utilisateur a basculé vers le profil de rôle : "${role}".`);
+    logAction("Changement de Rôle Actif", `Super Administrateur a basculé vers le profil de rôle : "${role}".`);
   };
 
   const togglePasswordVisibility = (id: string) => {
@@ -214,6 +230,12 @@ export default function SecurityView({
 
   const handleCreateAccess = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isSuperAdmin) {
+      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) est habilité à créer de nouveaux accès et attribuer des pouvoirs aux autres personnes.");
+      return;
+    }
+
     const cleanName = newFullName.trim();
     const cleanEmail = newEmail.trim().toLowerCase();
     const cleanPassword = newPassword.trim();
@@ -245,10 +267,15 @@ export default function SecurityView({
     setNewEmail('');
     setNewPassword('');
     setNewRole('Membre');
-    alert(`Compte d'accès créé avec succès pour ${cleanName} !\n\nIdentifiants de connexion :\n- E-mail : ${cleanEmail}\n- Mot de passe : ${cleanPassword}`);
+    alert(`Compte d'accès créé avec succès pour ${cleanName} !\n\nIdentifiants de connexion :\n- E-mail : ${cleanEmail}\n- Mot de passe : ${cleanPassword}\n- Rôle attribué : ${newRole}`);
   };
 
   const handleRevokeAccess = (id: string, name: string, email: string) => {
+    if (!isSuperAdmin) {
+      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) peut révoquer des accès.");
+      return;
+    }
+
     if (email === currentUserEmail) {
       alert("Vous ne pouvez pas révoquer votre propre compte d'accès actuellement connecté.");
       return;
@@ -324,6 +351,21 @@ export default function SecurityView({
 
   return (
     <div className="space-y-6">
+      {/* Notice Banner for Non-Super Admin */}
+      {!isSuperAdmin && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-700/80 rounded-2xl flex items-start gap-3.5 text-amber-900 dark:text-amber-200 text-xs shadow-md">
+          <Shield className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+          <div>
+            <p className="font-extrabold text-sm uppercase tracking-wide flex items-center gap-2">
+              <span>🔒 Restriction des Pouvoirs - Super Administrateur Exclusif</span>
+            </p>
+            <p className="mt-1 leading-relaxed">
+              Vous êtes actuellement connecté sous le profil <strong>{currentUserRole}</strong> ({currentUserEmail}). Seul le Super Administrateur (<strong>Ngary Sow - ngaryservicepro@gmail.com</strong>) détient le privilège absolu d'attribuer des pouvoirs, de créer des accès et de modifier les rôles ou mots de passe des autres membres du GIE Kara Lumière.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="pb-4 border-b border-gray-200 dark:border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${headingClass}`}>Sécurité & Traçabilité Officielle</h1>
@@ -385,11 +427,14 @@ export default function SecurityView({
                 <div 
                   key={role}
                   onClick={() => handleRoleToggle(role)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                  className={`p-4 rounded-xl border transition-all flex items-center justify-between ${
+                    isSuperAdmin ? 'cursor-pointer hover:border-[#22B8A7]/60' : 'cursor-not-allowed opacity-80'
+                  } ${
                     currentUserRole === role 
                       ? 'border-[#22B8A7] bg-[#22B8A7]/5' 
-                      : 'border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                      : 'border-gray-100 dark:border-gray-800'
                   }`}
+                  title={!isSuperAdmin ? "Attribution des rôles réservée au Super Administrateur (Ngary Sow)" : `Basculer vers le rôle ${role}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-full ${
@@ -409,9 +454,11 @@ export default function SecurityView({
                       </p>
                     </div>
                   </div>
-                  {currentUserRole === role && (
+                  {currentUserRole === role ? (
                     <span className="w-2.5 h-2.5 rounded-full bg-[#22B8A7]" />
-                  )}
+                  ) : !isSuperAdmin ? (
+                    <Lock className="w-3.5 h-3.5 text-amber-500/60" />
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -637,9 +684,14 @@ export default function SecurityView({
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-[#22B8A7] hover:bg-[#1ea091] text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                disabled={!isSuperAdmin}
+                className={`w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm ${
+                  isSuperAdmin 
+                    ? 'bg-[#22B8A7] hover:bg-[#1ea091] text-white cursor-pointer' 
+                    : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                <Lock className="w-3.5 h-3.5" /> Enregistrer les Accès
+                <Lock className="w-3.5 h-3.5" /> {isSuperAdmin ? "Enregistrer les Accès & Pouvoirs" : "Réservé au Super Administrateur (Ngary Sow)"}
               </button>
             </form>
           </div>
@@ -731,22 +783,30 @@ export default function SecurityView({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(acc)}
-                          className="text-[10px] text-[#22B8A7] hover:text-[#1ea091] hover:bg-[#22B8A7]/10 transition-colors flex items-center gap-1 py-1 px-2 rounded font-semibold cursor-pointer border border-[#22B8A7]/30"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Modifier
-                        </button>
+                        {isSuperAdmin ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(acc)}
+                              className="text-[10px] text-[#22B8A7] hover:text-[#1ea091] hover:bg-[#22B8A7]/10 transition-colors flex items-center gap-1 py-1 px-2 rounded font-semibold cursor-pointer border border-[#22B8A7]/30"
+                            >
+                              <Pencil className="w-3.5 h-3.5" /> Modifier
+                            </button>
 
-                        {acc.email !== currentUserEmail && (
-                          <button
-                            type="button"
-                            onClick={() => handleRevokeAccess(acc.id, acc.fullName, acc.email)}
-                            className="text-[10px] text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors flex items-center gap-1 py-1 px-2 hover:bg-red-500/10 rounded font-semibold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Révoquer
-                          </button>
+                            {acc.email !== currentUserEmail && (
+                              <button
+                                type="button"
+                                onClick={() => handleRevokeAccess(acc.id, acc.fullName, acc.email)}
+                                className="text-[10px] text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors flex items-center gap-1 py-1 px-2 hover:bg-red-500/10 rounded font-semibold cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Révoquer
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded font-mono font-semibold flex items-center gap-1 border border-amber-300/40">
+                            <Lock className="w-3 h-3" /> Modifications réservées au Super Admin
+                          </span>
                         )}
                       </div>
                     </div>
