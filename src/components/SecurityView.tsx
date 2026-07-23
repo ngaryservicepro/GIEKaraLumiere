@@ -151,6 +151,40 @@ export default function SecurityView({
     setEditingAccount(null);
   };
 
+  const handleExportAccounts = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(accessAccounts, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `comptes_acces_gie_kara_lumiere_${new Date().toISOString().slice(0,10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    logAction("Exportation des Comptes", "Export de la liste des comptes d'accès sous format JSON.", "Succès");
+  };
+
+  const handleImportAccounts = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const imported = JSON.parse(evt.target?.result as string);
+        if (Array.isArray(imported) && imported.length > 0) {
+          setAccessAccounts(imported);
+          logAction("Importation des Comptes", `Importation réussie de ${imported.length} comptes d'accès depuis un fichier JSON.`, "Succès");
+          alert(`Succès ! ${imported.length} comptes d'accès ont été importés et synchronisés avec le serveur.`);
+        } else {
+          alert("Le fichier JSON sélectionné ne contient pas une liste valide de comptes.");
+        }
+      } catch (err) {
+        alert("Erreur lors de la lecture du fichier JSON. Veuillez vérifier le format du fichier.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const roles: UserRole[] = [
     'Super Administrateur',
     'Président',
@@ -612,21 +646,50 @@ export default function SecurityView({
 
           {/* LIST OF ACCESSIBLE ACCOUNTS */}
           <div className={`p-6 rounded-xl border ${cardBgClass} lg:col-span-2 space-y-4`}>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-3">
               <div>
-                <h3 className={`font-bold text-sm ${headingClass}`}>Registres des Identifiants & Moteur d'Accès</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Mots de passe et rôles définis pour la traçabilité des opérations.</p>
+                <div className="flex items-center gap-2">
+                  <h3 className={`font-bold text-sm ${headingClass}`}>Registres des Identifiants & Moteur d'Accès</h3>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border border-emerald-500/30">
+                    <Database className="w-3 h-3" /> Sync Serveur Actif
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">Mots de passe et rôles enregistrés de façon permanente sur le serveur.</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher un compte..."
-                  value={accSearchTerm}
-                  onChange={(e) => setAccSearchTerm(e.target.value)}
-                  className="w-full pl-8 p-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-950 dark:text-white"
-                />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportAccounts}
+                  title="Télécharger une sauvegarde JSON de tous les comptes"
+                  className="px-2.5 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer border border-gray-300 dark:border-gray-700"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#22B8A7]" /> Exporter (JSON)
+                </button>
+
+                <label
+                  title="Importer une sauvegarde JSON de comptes"
+                  className="px-2.5 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer border border-gray-300 dark:border-gray-700"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#22B8A7]" /> Importer (JSON)
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportAccounts}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="relative w-full sm:w-48">
+                  <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher..."
+                    value={accSearchTerm}
+                    onChange={(e) => setAccSearchTerm(e.target.value)}
+                    className="w-full pl-8 p-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-950 dark:text-white"
+                  />
+                </div>
               </div>
             </div>
 

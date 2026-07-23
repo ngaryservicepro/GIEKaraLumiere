@@ -117,15 +117,30 @@ export default function App() {
   });
 
   const [accessAccounts, setAccessAccounts] = useState<AccessAccount[]>(() => {
-    const saved = localStorage.getItem('kl_access_accounts');
-    if (saved) return JSON.parse(saved);
-    return [
+    const defaultAccounts: AccessAccount[] = [
       { id: 'ACC-001', fullName: "Ngary Sow", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
-      { id: 'ACC-002', fullName: "Souleymane Faye", email: "president@karalumiere.sn", role: "Président", password: "pres", status: "Actif" },
-      { id: 'ACC-003', fullName: "Babacar Ndiaye", email: "sg@karalumiere.sn", role: "Secrétaire Général", password: "sg", status: "Actif" },
-      { id: 'ACC-004', fullName: "Fatou Diome", email: "musique@karalumiere.sn", role: "Responsable Musicale", password: "musique", status: "Actif" },
-      { id: 'ACC-005', fullName: "Seynabou Ndiaye", email: "seynabou@karalumiere.sn", role: "Membre", password: "membre", status: "Actif" }
+      { id: 'ACC-002', fullName: "Racine Sy", email: "racinesy1990@gmail.com", role: "Membre", password: "123456789@", status: "Actif" },
+      { id: 'ACC-003', fullName: "Souleymane Faye", email: "president@karalumiere.sn", role: "Président", password: "pres", status: "Actif" },
+      { id: 'ACC-004', fullName: "Babacar Ndiaye", email: "sg@karalumiere.sn", role: "Secrétaire Général", password: "sg", status: "Actif" },
+      { id: 'ACC-005', fullName: "Fatou Diome", email: "musique@karalumiere.sn", role: "Responsable Musicale", password: "musique", status: "Actif" },
+      { id: 'ACC-006', fullName: "Seynabou Ndiaye", email: "seynabou@karalumiere.sn", role: "Membre", password: "membre", status: "Actif" }
     ];
+
+    const saved = localStorage.getItem('kl_access_accounts');
+    if (!saved) return defaultAccounts;
+
+    try {
+      const parsed: AccessAccount[] = JSON.parse(saved);
+      const merged = [...parsed];
+      defaultAccounts.forEach(defAcc => {
+        if (!merged.some(acc => acc.email.trim().toLowerCase() === defAcc.email.trim().toLowerCase())) {
+          merged.push(defAcc);
+        }
+      });
+      return merged;
+    } catch {
+      return defaultAccounts;
+    }
   });
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
@@ -209,7 +224,26 @@ export default function App() {
   }, [currentUserRole]);
 
   useEffect(() => {
+    // Initial fetch from backend server
+    fetch('/api/accounts')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.accounts) && data.accounts.length > 0) {
+          setAccessAccounts(data.accounts);
+          localStorage.setItem('kl_access_accounts', JSON.stringify(data.accounts));
+        }
+      })
+      .catch(err => console.log('Server accounts fetch fallback:', err));
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('kl_access_accounts', JSON.stringify(accessAccounts));
+    // Permanent backend sync
+    fetch('/api/accounts/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accounts: accessAccounts })
+    }).catch(err => console.log('Accounts server sync fallback:', err));
   }, [accessAccounts]);
 
   useEffect(() => {
