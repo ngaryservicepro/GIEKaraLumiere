@@ -37,6 +37,7 @@ import AlertsView from './components/AlertsView';
 import SecurityView from './components/SecurityView';
 import LoginView from './components/LoginView';
 import gieLogo from './assets/images/gie_logo_1781655966296.jpg';
+import { subscribeCollection, saveDocItem, deleteDocItem, syncCollection } from './lib/firebase';
 
 export default function App() {
   
@@ -227,6 +228,52 @@ export default function App() {
     localStorage.setItem('kl_user_role', currentUserRole);
   }, [currentUserRole]);
 
+  // Real-time Firestore Subscriptions across all browsers & devices
+  useEffect(() => {
+    const defaultAccounts: AccessAccount[] = [
+      { id: 'ACC-001', fullName: "Aliou Cissé", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
+      { id: 'ACC-002', fullName: "Racine Sy", email: "racinesy1990@gmail.com", role: "Membre", password: "123456789@", status: "Actif" },
+      { id: 'ACC-003', fullName: "Souleymane Faye", email: "president@karalumiere.sn", role: "Président", password: "pres", status: "Actif" },
+      { id: 'ACC-004', fullName: "Babacar Ndiaye", email: "sg@karalumiere.sn", role: "Secrétaire Général", password: "sg", status: "Actif" },
+      { id: 'ACC-005', fullName: "Fatou Diome", email: "musique@karalumiere.sn", role: "Responsable Musicale", password: "musique", status: "Actif" },
+      { id: 'ACC-006', fullName: "Seynabou Ndiaye", email: "seynabou@karalumiere.sn", role: "Membre", password: "membre", status: "Actif" }
+    ];
+
+    const unsubMembers = subscribeCollection<Member>('members', setMembers);
+    const unsubClubs = subscribeCollection<Club>('clubs', setClubs);
+    const unsubLeagues = subscribeCollection<League>('leagues', setLeagues);
+    const unsubPositions = subscribeCollection<ExecutivePosition>('positions', setPositions);
+    const unsubMeetings = subscribeCollection<Meeting>('meetings', setMeetings);
+    const unsubActivities = subscribeCollection<Activity>('activities', setActivities);
+    const unsubContributions = subscribeCollection<Contribution>('contributions', setContributions);
+    const unsubJournals = subscribeCollection<JournalEntry>('journals', setJournalEntries);
+    const unsubEmployees = subscribeCollection<Employee>('employees', setEmployees);
+    const unsubDocuments = subscribeCollection<ArchivalDocument>('documents', setDocuments);
+    const unsubAlerts = subscribeCollection<IntelligentAlert>('alerts', setAlerts);
+    const unsubAccounts = subscribeCollection<AccessAccount>('accounts', (data) => {
+      if (data && data.length > 0) {
+        setAccessAccounts(data);
+      }
+    }, defaultAccounts);
+    const unsubLogs = subscribeCollection<AuditLog>('auditLogs', setAuditLogs);
+
+    return () => {
+      unsubMembers();
+      unsubClubs();
+      unsubLeagues();
+      unsubPositions();
+      unsubMeetings();
+      unsubActivities();
+      unsubContributions();
+      unsubJournals();
+      unsubEmployees();
+      unsubDocuments();
+      unsubAlerts();
+      unsubAccounts();
+      unsubLogs();
+    };
+  }, []);
+
   useEffect(() => {
     // Initial fetch from backend server
     fetch('/api/accounts')
@@ -242,6 +289,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('kl_access_accounts', JSON.stringify(accessAccounts));
+    syncCollection('accounts', accessAccounts);
     // Permanent backend sync
     fetch('/api/accounts/sync', {
       method: 'POST',
@@ -297,29 +345,25 @@ export default function App() {
   }, [currentUserEmail]);
 
   useEffect(() => {
-    localStorage.setItem('kl_access_accounts', JSON.stringify(accessAccounts));
-  }, [accessAccounts]);
-
-  useEffect(() => {
     localStorage.setItem('kl_audit_logs', JSON.stringify(auditLogs));
   }, [auditLogs]);
 
   // BULK DATABASE BACKUP COMPACTION & RESTORE HANDLER
   const handleRestoreDatabase = (data: any) => {
     if (!data) return;
-    if (Array.isArray(data.members)) setMembers(data.members);
-    if (Array.isArray(data.clubs)) setClubs(data.clubs);
-    if (Array.isArray(data.leagues)) setLeagues(data.leagues);
-    if (Array.isArray(data.positions)) setPositions(data.positions);
-    if (Array.isArray(data.meetings)) setMeetings(data.meetings);
-    if (Array.isArray(data.activities)) setActivities(data.activities);
-    if (Array.isArray(data.contributions)) setContributions(data.contributions);
-    if (Array.isArray(data.journalEntries)) setJournalEntries(data.journalEntries);
-    if (Array.isArray(data.employees)) setEmployees(data.employees);
-    if (Array.isArray(data.documents)) setDocuments(data.documents);
-    if (Array.isArray(data.alerts)) setAlerts(data.alerts);
-    if (Array.isArray(data.accessAccounts)) setAccessAccounts(data.accessAccounts);
-    if (Array.isArray(data.auditLogs)) setAuditLogs(data.auditLogs);
+    if (Array.isArray(data.members)) { setMembers(data.members); syncCollection('members', data.members); }
+    if (Array.isArray(data.clubs)) { setClubs(data.clubs); syncCollection('clubs', data.clubs); }
+    if (Array.isArray(data.leagues)) { setLeagues(data.leagues); syncCollection('leagues', data.leagues); }
+    if (Array.isArray(data.positions)) { setPositions(data.positions); syncCollection('positions', data.positions); }
+    if (Array.isArray(data.meetings)) { setMeetings(data.meetings); syncCollection('meetings', data.meetings); }
+    if (Array.isArray(data.activities)) { setActivities(data.activities); syncCollection('activities', data.activities); }
+    if (Array.isArray(data.contributions)) { setContributions(data.contributions); syncCollection('contributions', data.contributions); }
+    if (Array.isArray(data.journalEntries)) { setJournalEntries(data.journalEntries); syncCollection('journals', data.journalEntries); }
+    if (Array.isArray(data.employees)) { setEmployees(data.employees); syncCollection('employees', data.employees); }
+    if (Array.isArray(data.documents)) { setDocuments(data.documents); syncCollection('documents', data.documents); }
+    if (Array.isArray(data.alerts)) { setAlerts(data.alerts); syncCollection('alerts', data.alerts); }
+    if (Array.isArray(data.accessAccounts)) { setAccessAccounts(data.accessAccounts); syncCollection('accounts', data.accessAccounts); }
+    if (Array.isArray(data.auditLogs)) { setAuditLogs(data.auditLogs); syncCollection('auditLogs', data.auditLogs); }
     
     if (typeof data.initialLiquidity === 'number') setInitialLiquidity(data.initialLiquidity);
     if (typeof data.useManualLiquidity === 'boolean') setUseManualLiquidity(data.useManualLiquidity);
@@ -346,120 +390,159 @@ export default function App() {
       status
     };
     setAuditLogs(prev => [newLog, ...prev]);
+    saveDocItem('auditLogs', newLog);
   };
 
   // SYSTEM MUTATOR HANDLERS
   const addMember = (mData: Omit<Member, 'id'>) => {
     const nextId = 'MEM-' + String(members.length + 1).padStart(3, '0');
-    setMembers([...members, { id: nextId, ...mData }]);
+    const newItem: Member = { id: nextId, ...mData };
+    setMembers(prev => [...prev, newItem]);
+    saveDocItem('members', newItem);
     logAction("Enregistrement Adhérent", `Création du membre de club "${mData.fullName}" sous l'identifiant ${nextId}.`);
   };
 
   const updateMember = (id: string, mData: Partial<Member>) => {
-    setMembers(members.map(m => m.id === id ? { ...m, ...mData } : m));
-    const mName = members.find(m => m.id === id)?.fullName || id;
+    const updated = members.map(m => m.id === id ? { ...m, ...mData } : m);
+    setMembers(updated);
+    const target = updated.find(m => m.id === id);
+    if (target) saveDocItem('members', target);
+    const mName = target?.fullName || id;
     logAction("Modification Adhérent", `Mise à jour des coordonnées administratives de "${mName}".`);
   };
 
   const deleteMember = (id: string) => {
     const mName = members.find(m => m.id === id)?.fullName || id;
-    setMembers(members.filter(m => m.id !== id));
+    setMembers(prev => prev.filter(m => m.id !== id));
+    deleteDocItem('members', id);
     logAction("Suppression Adhérent", `Retrait définitif de "${mName}" de la base de données.`);
   };
 
   const addClub = (cData: Omit<Club, 'id'>) => {
     const id = 'CLUB-' + Math.floor(100 + Math.random() * 900);
-    setClubs([...clubs, { id, ...cData }]);
+    const newItem: Club = { id, ...cData };
+    setClubs(prev => [...prev, newItem]);
+    saveDocItem('clubs', newItem);
     logAction("Affiliation Club", `Ajout du club ou association "${cData.name}" au GIE.`);
   };
 
   const updateClub = (id: string, cData: Partial<Club>) => {
-    setClubs(clubs.map(c => c.id === id ? { ...c, ...cData } : c));
-    const cName = clubs.find(c => c.id === id)?.name || id;
+    const updated = clubs.map(c => c.id === id ? { ...c, ...cData } : c);
+    setClubs(updated);
+    const target = updated.find(c => c.id === id);
+    if (target) saveDocItem('clubs', target);
+    const cName = target?.name || id;
     logAction("Modification Club", `Fiche du club "${cName}" mise à jour.`);
   };
 
   const deleteClub = (id: string) => {
     const cName = clubs.find(c => c.id === id)?.name || id;
-    setClubs(clubs.filter(c => c.id !== id));
+    setClubs(prev => prev.filter(c => c.id !== id));
+    deleteDocItem('clubs', id);
     logAction("Désaffiliation Club", `Retrait définitif du club "${cName}".`);
   };
 
   const addLeague = (lData: Omit<League, 'id'>) => {
     const id = 'LIG-' + Math.floor(100 + Math.random() * 900);
-    setLeagues([...leagues, { id, ...lData }]);
+    const newItem: League = { id, ...lData };
+    setLeagues(prev => [...prev, newItem]);
+    saveDocItem('leagues', newItem);
     logAction("Affiliation Ligue", `Création de la ligue régionale "${lData.name}" (${lData.region}).`);
   };
 
   const updateLeague = (id: string, lData: Partial<League>) => {
-    setLeagues(leagues.map(l => l.id === id ? { ...l, ...lData } : l));
-    const lName = leagues.find(l => l.id === id)?.name || id;
+    const updated = leagues.map(l => l.id === id ? { ...l, ...lData } : l);
+    setLeagues(updated);
+    const target = updated.find(l => l.id === id);
+    if (target) saveDocItem('leagues', target);
+    const lName = target?.name || id;
     logAction("Modification Ligue", `Mise à jour pour la ligue "${lName}".`);
   };
 
   const deleteLeague = (id: string) => {
     const lName = leagues.find(l => l.id === id)?.name || id;
-    setLeagues(leagues.filter(l => l.id !== id));
+    setLeagues(prev => prev.filter(l => l.id !== id));
+    deleteDocItem('leagues', id);
     logAction("Suppression Ligue", `Retrait de la ligue "${lName}".`);
   };
 
   const addPosition = (pData: Omit<ExecutivePosition, 'id' | 'isDefault'>) => {
     const id = 'POS-' + (positions.length + 1);
-    setPositions([...positions, { id, isDefault: false, ...pData }]);
+    const newItem: ExecutivePosition = { id, isDefault: false, ...pData };
+    setPositions(prev => [...prev, newItem]);
+    saveDocItem('positions', newItem);
     logAction("Création de Poste", `Ajout d'un mandat honorifique "${pData.title}" attribué à "${pData.holderName}".`);
   };
 
   const updatePosition = (id: string, pData: Partial<ExecutivePosition>) => {
-    setPositions(positions.map(p => p.id === id ? { ...p, ...pData } : p));
-    const title = positions.find(p => p.id === id)?.title || id;
+    const updated = positions.map(p => p.id === id ? { ...p, ...pData } : p);
+    setPositions(updated);
+    const target = updated.find(p => p.id === id);
+    if (target) saveDocItem('positions', target);
+    const title = target?.title || id;
     logAction("Modification Mandat", `Mise à jour pour le rôle exécutif de "${title}".`);
   };
 
   const deletePosition = (id: string) => {
     const title = positions.find(p => p.id === id)?.title || id;
-    setPositions(positions.filter(p => p.id !== id));
+    setPositions(prev => prev.filter(p => p.id !== id));
+    deleteDocItem('positions', id);
     logAction("Suppression Mandat", `Retrait du poste de membre du bureau: "${title}".`);
   };
 
   const addMeeting = (meet: Omit<Meeting, 'id'>) => {
     const id = 'AGO-' + Math.floor(1000 + Math.random() * 9000);
-    setMeetings([{ id, ...meet }, ...meetings]);
+    const newItem: Meeting = { id, ...meet };
+    setMeetings(prev => [newItem, ...prev]);
+    saveDocItem('meetings', newItem);
     logAction("Planification Réunion", `Création de la séance de travail / PV "${meet.title}" prévue pour le ${meet.date}.`);
   };
 
   const updateMeeting = (id: string, meet: Partial<Meeting>) => {
-    setMeetings(meetings.map(m => m.id === id ? { ...m, ...meet } as Meeting : m));
-    const mTitle = meetings.find(m => m.id === id)?.title || id;
+    const updated = meetings.map(m => m.id === id ? { ...m, ...meet } as Meeting : m);
+    setMeetings(updated);
+    const target = updated.find(m => m.id === id);
+    if (target) saveDocItem('meetings', target);
+    const mTitle = target?.title || id;
     logAction("Mise à jour Réunion / Signature PV", `Modifications / Enregistrement des signatures pour la réunion "${mTitle}".`);
   };
 
   const deleteMeeting = (id: string) => {
     const mTitle = meetings.find(m => m.id === id)?.title || id;
-    setMeetings(meetings.filter(m => m.id !== id));
+    setMeetings(prev => prev.filter(m => m.id !== id));
+    deleteDocItem('meetings', id);
     logAction("Suppression Réunion", `Retrait de la réunion "${mTitle}".`);
   };
 
   const addActivity = (act: Omit<Activity, 'id'>) => {
     const id = 'ACT-' + Math.floor(1000 + Math.random() * 9000);
-    setActivities([{ id, ...act }, ...activities]);
+    const newItem: Activity = { id, ...act };
+    setActivities(prev => [newItem, ...prev]);
+    saveDocItem('activities', newItem);
     logAction("Création d'Activité", `Programmation de l'activité "${act.name}" dotée d'un budget de ${act.budget.toLocaleString()} FCFA.`);
   };
 
   const updateActivity = (id: string, act: Partial<Activity>) => {
-    setActivities(activities.map(a => a.id === id ? { ...a, ...act } as Activity : a));
-    const aName = activities.find(a => a.id === id)?.name || id;
+    const updated = activities.map(a => a.id === id ? { ...a, ...act } as Activity : a);
+    setActivities(updated);
+    const target = updated.find(a => a.id === id);
+    if (target) saveDocItem('activities', target);
+    const aName = target?.name || id;
     logAction("Modification d'Activité", `Mise à jour de l'activité "${aName}".`);
   };
 
   const deleteActivity = (id: string) => {
     const aName = activities.find(a => a.id === id)?.name || id;
-    setActivities(activities.filter(a => a.id !== id));
+    setActivities(prev => prev.filter(a => a.id !== id));
+    deleteDocItem('activities', id);
     logAction("Suppression d'Activité", `Retrait de l'activité "${aName}".`);
   };
 
   const addContribution = (contrib: Omit<Contribution, 'id'>) => {
     const id = 'TX-' + Math.floor(100000 + Math.random() * 900000);
-    setContributions([{ id, ...contrib }, ...contributions]);
+    const newItem: Contribution = { id, ...contrib };
+    setContributions(prev => [newItem, ...prev]);
+    saveDocItem('contributions', newItem);
 
     const memName = members.find(m => m.id === contrib.memberId)?.fullName || 'Adhérent';
     // Push corresponding smart accounting double entry automatically for transparency!
@@ -477,43 +560,53 @@ export default function App() {
   const deleteContribution = (id: string) => {
     const cObj = contributions.find(c => c.id === id);
     const amountStr = cObj ? `${cObj.amount.toLocaleString()} FCFA` : '';
-    setContributions(contributions.filter(c => c.id !== id));
+    setContributions(prev => prev.filter(c => c.id !== id));
+    deleteDocItem('contributions', id);
     logAction("Annulation Cotisation", `Suppression du reçu de cotisation ID: ${id} (${amountStr}).`);
   };
 
   const addJournalEntry = (je: Omit<JournalEntry, 'id'>) => {
     const id = 'JE-' + Math.floor(10000 + Math.random() * 90000);
-    setJournalEntries([{ id, ...je }, ...journalEntries]);
+    const newItem: JournalEntry = { id, ...je };
+    setJournalEntries(prev => [newItem, ...prev]);
+    saveDocItem('journals', newItem);
     logAction("Saisie Comptable", `Nouvel enregistrement comptable [${je.type} - Compte ${je.accountCode}]: "${je.label}" d'un montant de ${je.amount.toLocaleString()} FCFA.`);
   };
 
   const deleteJournalEntry = (id: string) => {
     const jeName = journalEntries.find(je => je.id === id)?.label || id;
-    setJournalEntries(journalEntries.filter(je => je.id !== id));
+    setJournalEntries(prev => prev.filter(je => je.id !== id));
+    deleteDocItem('journals', id);
     logAction("Annulation Comptable", `Retrait de l'écriture comptable : "${jeName}".`);
   };
 
   const addEmployee = (emp: Omit<Employee, 'id'>) => {
     const id = 'EMP-' + String(employees.length + 1).padStart(3, '0');
-    setEmployees([...employees, { id, ...emp }]);
+    const newItem: Employee = { id, ...emp };
+    setEmployees(prev => [...prev, newItem]);
+    saveDocItem('employees', newItem);
     logAction("Enregistrement Collaborateur", `Création de la fiche de collaboration administrative pour "${emp.fullName}" (${emp.contractType}).`);
   };
 
   const deleteEmployee = (id: string) => {
     const empName = employees.find(e => e.id === id)?.fullName || id;
-    setEmployees(employees.filter(emp => emp.id !== id));
+    setEmployees(prev => prev.filter(emp => emp.id !== id));
+    deleteDocItem('employees', id);
     logAction("Retrait Collaborateur", `Suppression de la fiche de collaboration de "${empName}".`);
   };
 
-  const addDocument = (doc: Omit<ArchivalDocument, 'id'>) => {
+  const addDocument = (docItem: Omit<ArchivalDocument, 'id'>) => {
     const id = 'DOC-' + Math.floor(1000 + Math.random() * 9000);
-    setDocuments([{ id, ...doc }, ...documents]);
-    logAction("Archivage Document", `Dépôt sécurisé du document "${doc.name}" dans la section coffre-fort.`);
+    const newItem: ArchivalDocument = { id, ...docItem };
+    setDocuments(prev => [newItem, ...prev]);
+    saveDocItem('documents', newItem);
+    logAction("Archivage Document", `Dépôt sécurisé du document "${docItem.name}" dans la section coffre-fort.`);
   };
 
   const deleteDocument = (id: string) => {
     const docName = documents.find(d => d.id === id)?.name || id;
-    setDocuments(documents.filter(doc => doc.id !== id));
+    setDocuments(prev => prev.filter(doc => doc.id !== id));
+    deleteDocItem('documents', id);
     logAction("Destruction Archives", `Révocation et suppression définitive de l'archive "${docName}".`);
   };
 

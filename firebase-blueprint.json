@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "GIE Kara Lumiere Member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "club": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "Account": {
+      "title": "Account",
+      "description": "User Access Account",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string" },
+        "password": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": {
+      "schema": "Member",
+      "description": "Members collection"
+    },
+    "/clubs/{clubId}": {
+      "schema": "Member",
+      "description": "Clubs collection"
+    },
+    "/events/{eventId}": {
+      "schema": "Member",
+      "description": "Events collection"
+    },
+    "/contributions/{contributionId}": {
+      "schema": "Member",
+      "description": "Contributions collection"
+    },
+    "/journals/{journalId}": {
+      "schema": "Member",
+      "description": "Journals collection"
+    },
+    "/employees/{employeeId}": {
+      "schema": "Member",
+      "description": "Employees collection"
+    },
+    "/documents/{documentId}": {
+      "schema": "Member",
+      "description": "Documents collection"
+    },
+    "/alerts/{alertId}": {
+      "schema": "Member",
+      "description": "Alerts collection"
+    },
+    "/accounts/{accountId}": {
+      "schema": "Account",
+      "description": "Access Accounts collection"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "Member",
+      "description": "Audit Logs collection"
+    }
+  }
+}
