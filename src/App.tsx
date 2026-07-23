@@ -118,7 +118,7 @@ export default function App() {
 
   const [accessAccounts, setAccessAccounts] = useState<AccessAccount[]>(() => {
     const defaultAccounts: AccessAccount[] = [
-      { id: 'ACC-001', fullName: "Ngary Sow", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
+      { id: 'ACC-001', fullName: "Aliou Cissé", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
       { id: 'ACC-002', fullName: "Racine Sy", email: "racinesy1990@gmail.com", role: "Membre", password: "123456789@", status: "Actif" },
       { id: 'ACC-003', fullName: "Souleymane Faye", email: "president@karalumiere.sn", role: "Président", password: "pres", status: "Actif" },
       { id: 'ACC-004', fullName: "Babacar Ndiaye", email: "sg@karalumiere.sn", role: "Secrétaire Général", password: "sg", status: "Actif" },
@@ -131,7 +131,11 @@ export default function App() {
 
     try {
       const parsed: AccessAccount[] = JSON.parse(saved);
-      const merged = [...parsed];
+      const merged = parsed.map(acc => 
+        acc.email.trim().toLowerCase() === "ngaryservicepro@gmail.com" 
+          ? { ...acc, fullName: "Aliou Cissé" } 
+          : acc
+      );
       defaultAccounts.forEach(defAcc => {
         if (!merged.some(acc => acc.email.trim().toLowerCase() === defAcc.email.trim().toLowerCase())) {
           merged.push(defAcc);

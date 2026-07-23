@@ -13,7 +13,7 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 const DEFAULT_ACCOUNTS = [
-  { id: 'ACC-001', fullName: "Ngary Sow", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
+  { id: 'ACC-001', fullName: "Aliou Cissé", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" },
   { id: 'ACC-002', fullName: "Racine Sy", email: "racinesy1990@gmail.com", role: "Membre", password: "123456789@", status: "Actif" },
   { id: 'ACC-003', fullName: "Souleymane Faye", email: "president@karalumiere.sn", role: "Président", password: "pres", status: "Actif" },
   { id: 'ACC-004', fullName: "Babacar Ndiaye", email: "sg@karalumiere.sn", role: "Secrétaire Général", password: "sg", status: "Actif" },
@@ -29,8 +29,14 @@ function readAccounts() {
     }
     const data = fs.readFileSync(ACCOUNTS_FILE, "utf-8");
     const accounts = JSON.parse(data);
-    // Ensure default admin & Racine Sy always exist if missing
+    // Ensure default admin & Racine Sy always exist if missing, and update admin name to Aliou Cissé
     let modified = false;
+    accounts.forEach((a: any) => {
+      if ((a.email || "").trim().toLowerCase() === "ngaryservicepro@gmail.com" && a.fullName !== "Aliou Cissé") {
+        a.fullName = "Aliou Cissé";
+        modified = true;
+      }
+    });
     DEFAULT_ACCOUNTS.forEach(defAcc => {
       if (!accounts.some((a: any) => (a.email || "").trim().toLowerCase() === defAcc.email.trim().toLowerCase())) {
         accounts.push(defAcc);

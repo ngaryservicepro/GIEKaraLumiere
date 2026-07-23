@@ -74,7 +74,7 @@ export default function LoginView({
         if (cleanEmail === 'racinesy1990@gmail.com' && (cleanPassword === '123456789@' || password === '123456789@' || cleanPassword === 'admin')) {
           account = { id: 'ACC-002', fullName: "Racine Sy", email: "racinesy1990@gmail.com", role: "Membre", password: "123456789@", status: "Actif" };
         } else if (cleanEmail === 'ngaryservicepro@gmail.com' && (cleanPassword === 'admin' || password === 'admin')) {
-          account = { id: 'ACC-001', fullName: "Ngary Sow", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" };
+          account = { id: 'ACC-001', fullName: "Aliou Cissé", email: "ngaryservicepro@gmail.com", role: "Super Administrateur", password: "admin", status: "Actif" };
         }
       }
 

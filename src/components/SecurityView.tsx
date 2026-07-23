@@ -75,7 +75,7 @@ export default function SecurityView({
   databaseStats
 }: SecurityViewProps) {
   
-  // Exclusive Master Admin permission check (Ngary Sow / Super Administrateur)
+  // Exclusive Master Admin permission check (Aliou Cissé / Super Administrateur)
   const isSuperAdmin = currentUserRole === 'Super Administrateur' || currentUserEmail.trim().toLowerCase() === 'ngaryservicepro@gmail.com';
 
   const [securitySection, setSecuritySection] = useState<'roles' | 'comptes' | 'logs'>('roles');
@@ -103,7 +103,7 @@ export default function SecurityView({
 
   const handleOpenEdit = (acc: AccessAccount) => {
     if (!isSuperAdmin) {
-      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) est autorisé à modifier les accès et à attribuer des pouvoirs aux autres membres.");
+      alert("Action refusée : Seul le Super Administrateur (Aliou Cissé) est autorisé à modifier les accès et à attribuer des pouvoirs aux autres membres.");
       return;
     }
     setEditingAccount(acc);
@@ -119,7 +119,7 @@ export default function SecurityView({
     if (!editingAccount) return;
 
     if (!isSuperAdmin) {
-      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) a l'exclusivité d'attribuer des pouvoirs et de modifier les identifiants.");
+      alert("Action refusée : Seul le Super Administrateur (Aliou Cissé) a l'exclusivité d'attribuer des pouvoirs et de modifier les identifiants.");
       return;
     }
 
@@ -208,7 +208,7 @@ export default function SecurityView({
 
   const handleRoleToggle = (role: UserRole) => {
     if (!isSuperAdmin) {
-      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) a le pouvoir d'attribuer des rôles et de modifier les privilèges d'accès.");
+      alert("Action refusée : Seul le Super Administrateur (Aliou Cissé) a le pouvoir d'attribuer des rôles et de modifier les privilèges d'accès.");
       return;
     }
     setCurrentUserRole(role);
@@ -232,7 +232,7 @@ export default function SecurityView({
     e.preventDefault();
 
     if (!isSuperAdmin) {
-      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) est habilité à créer de nouveaux accès et attribuer des pouvoirs aux autres personnes.");
+      alert("Action refusée : Seul le Super Administrateur (Aliou Cissé) est habilité à créer de nouveaux accès et attribuer des pouvoirs aux autres personnes.");
       return;
     }
 
@@ -272,7 +272,7 @@ export default function SecurityView({
 
   const handleRevokeAccess = (id: string, name: string, email: string) => {
     if (!isSuperAdmin) {
-      alert("Action refusée : Seul le Super Administrateur (Ngary Sow) peut révoquer des accès.");
+      alert("Action refusée : Seul le Super Administrateur (Aliou Cissé) peut révoquer des accès.");
       return;
     }
 
@@ -360,7 +360,7 @@ export default function SecurityView({
               <span>🔒 Restriction des Pouvoirs - Super Administrateur Exclusif</span>
             </p>
             <p className="mt-1 leading-relaxed">
-              Vous êtes actuellement connecté sous le profil <strong>{currentUserRole}</strong> ({currentUserEmail}). Seul le Super Administrateur (<strong>Ngary Sow - ngaryservicepro@gmail.com</strong>) détient le privilège absolu d'attribuer des pouvoirs, de créer des accès et de modifier les rôles ou mots de passe des autres membres du GIE Kara Lumière.
+              Vous êtes actuellement connecté sous le profil <strong>{currentUserRole}</strong> ({currentUserEmail}). Seul le Super Administrateur (<strong>Aliou Cissé - ngaryservicepro@gmail.com</strong>) détient le privilège absolu d'attribuer des pouvoirs, de créer des accès et de modifier les rôles ou mots de passe des autres membres du GIE Kara Lumière.
             </p>
           </div>
         </div>
@@ -691,7 +691,7 @@ export default function SecurityView({
                     : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <Lock className="w-3.5 h-3.5" /> {isSuperAdmin ? "Enregistrer les Accès & Pouvoirs" : "Réservé au Super Administrateur (Ngary Sow)"}
+                <Lock className="w-3.5 h-3.5" /> {isSuperAdmin ? "Enregistrer les Accès & Pouvoirs" : "Réservé au Super Administrateur (Aliou Cissé)"}
               </button>
             </form>
           </div>
