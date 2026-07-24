@@ -6,10 +6,31 @@ import { createServer as createViteServer } from "vite";
 const DATA_DIR = path.join(process.cwd(), "data");
 const ACCOUNTS_FILE = path.join(DATA_DIR, "accounts.json");
 const AUDIT_FILE = path.join(DATA_DIR, "audit_logs.json");
+const APP_DATA_FILE = path.join(DATA_DIR, "app_data.json");
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function readAppData() {
+  try {
+    if (fs.existsSync(APP_DATA_FILE)) {
+      const raw = fs.readFileSync(APP_DATA_FILE, "utf-8");
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.error("Error reading app_data.json:", err);
+  }
+  return null;
+}
+
+function writeAppData(data: any) {
+  try {
+    fs.writeFileSync(APP_DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error("Error writing app_data.json:", err);
+  }
 }
 
 const DEFAULT_ACCOUNTS = [
@@ -76,6 +97,23 @@ async function startServer() {
   app.get("/api/accounts", (req, res) => {
     const accounts = readAccounts();
     res.json({ success: true, accounts });
+  });
+
+  // GET Full Application Data
+  app.get("/api/app-data", (req, res) => {
+    const data = readAppData();
+    res.json({ success: true, data });
+  });
+
+  // POST Sync Full Application Data
+  app.post("/api/app-data/sync", (req, res) => {
+    const { data } = req.body;
+    if (data) {
+      writeAppData(data);
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ success: false, error: "Invalid data payload" });
+    }
   });
 
   // POST Sync All Accounts

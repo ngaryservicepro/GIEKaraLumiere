@@ -228,6 +228,60 @@ export default function App() {
     localStorage.setItem('kl_user_role', currentUserRole);
   }, [currentUserRole]);
 
+  // Initial fetch full application data from backend server
+  useEffect(() => {
+    fetch('/api/app-data')
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          handleRestoreDatabase(res.data);
+        }
+      })
+      .catch(err => console.log('Error fetching app data:', err));
+
+    fetch('/api/accounts')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.accounts) && data.accounts.length > 0) {
+          setAccessAccounts(data.accounts);
+          localStorage.setItem('kl_access_accounts', JSON.stringify(data.accounts));
+        }
+      })
+      .catch(err => console.log('Server accounts fetch fallback:', err));
+  }, []);
+
+  // Sync state to backend server for persistence across browsers
+  useEffect(() => {
+    const appData = {
+      members,
+      clubs,
+      leagues,
+      positions,
+      meetings,
+      activities,
+      contributions,
+      journalEntries,
+      employees,
+      documents,
+      alerts,
+      accessAccounts,
+      auditLogs,
+      initialLiquidity,
+      useManualLiquidity,
+      manualLiquidity
+    };
+
+    fetch('/api/app-data/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: appData })
+    }).catch(err => console.log('App data server sync error:', err));
+  }, [
+    members, clubs, leagues, positions, meetings, activities,
+    contributions, journalEntries, employees, documents, alerts,
+    accessAccounts, auditLogs, initialLiquidity, useManualLiquidity, manualLiquidity
+  ]);
+
   // Real-time Firestore Subscriptions across all browsers & devices
   useEffect(() => {
     const defaultAccounts: AccessAccount[] = [
@@ -239,23 +293,19 @@ export default function App() {
       { id: 'ACC-006', fullName: "Seynabou Ndiaye", email: "seynabou@karalumiere.sn", role: "Membre", password: "membre", status: "Actif" }
     ];
 
-    const unsubMembers = subscribeCollection<Member>('members', setMembers);
-    const unsubClubs = subscribeCollection<Club>('clubs', setClubs);
-    const unsubLeagues = subscribeCollection<League>('leagues', setLeagues);
-    const unsubPositions = subscribeCollection<ExecutivePosition>('positions', setPositions);
-    const unsubMeetings = subscribeCollection<Meeting>('meetings', setMeetings);
-    const unsubActivities = subscribeCollection<Activity>('activities', setActivities);
-    const unsubContributions = subscribeCollection<Contribution>('contributions', setContributions);
-    const unsubJournals = subscribeCollection<JournalEntry>('journals', setJournalEntries);
-    const unsubEmployees = subscribeCollection<Employee>('employees', setEmployees);
-    const unsubDocuments = subscribeCollection<ArchivalDocument>('documents', setDocuments);
-    const unsubAlerts = subscribeCollection<IntelligentAlert>('alerts', setAlerts);
-    const unsubAccounts = subscribeCollection<AccessAccount>('accounts', (data) => {
-      if (data && data.length > 0) {
-        setAccessAccounts(data);
-      }
-    }, defaultAccounts);
-    const unsubLogs = subscribeCollection<AuditLog>('auditLogs', setAuditLogs);
+    const unsubMembers = subscribeCollection<Member>('members', (data) => { if (data && data.length > 0) setMembers(data); }, members);
+    const unsubClubs = subscribeCollection<Club>('clubs', (data) => { if (data && data.length > 0) setClubs(data); }, clubs);
+    const unsubLeagues = subscribeCollection<League>('leagues', (data) => { if (data && data.length > 0) setLeagues(data); }, leagues);
+    const unsubPositions = subscribeCollection<ExecutivePosition>('positions', (data) => { if (data && data.length > 0) setPositions(data); }, positions);
+    const unsubMeetings = subscribeCollection<Meeting>('meetings', (data) => { if (data && data.length > 0) setMeetings(data); }, meetings);
+    const unsubActivities = subscribeCollection<Activity>('activities', (data) => { if (data && data.length > 0) setActivities(data); }, activities);
+    const unsubContributions = subscribeCollection<Contribution>('contributions', (data) => { if (data && data.length > 0) setContributions(data); }, contributions);
+    const unsubJournals = subscribeCollection<JournalEntry>('journals', (data) => { if (data && data.length > 0) setJournalEntries(data); }, journalEntries);
+    const unsubEmployees = subscribeCollection<Employee>('employees', (data) => { if (data && data.length > 0) setEmployees(data); }, employees);
+    const unsubDocuments = subscribeCollection<ArchivalDocument>('documents', (data) => { if (data && data.length > 0) setDocuments(data); }, documents);
+    const unsubAlerts = subscribeCollection<IntelligentAlert>('alerts', (data) => { if (data && data.length > 0) setAlerts(data); }, alerts);
+    const unsubAccounts = subscribeCollection<AccessAccount>('accounts', (data) => { if (data && data.length > 0) setAccessAccounts(data); }, accessAccounts.length > 0 ? accessAccounts : defaultAccounts);
+    const unsubLogs = subscribeCollection<AuditLog>('auditLogs', (data) => { if (data && data.length > 0) setAuditLogs(data); }, auditLogs);
 
     return () => {
       unsubMembers();

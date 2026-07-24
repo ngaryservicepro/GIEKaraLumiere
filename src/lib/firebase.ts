@@ -26,18 +26,25 @@ testConnection();
 export function subscribeCollection<T extends { id: string }>(
   collectionName: string,
   onData: (items: T[]) => void,
-  defaultItems: T[] = []
+  defaultItems?: T[]
 ) {
   const colRef = collection(db, collectionName);
+  let seeded = false;
+
   return onSnapshot(colRef, (snapshot) => {
-    if (snapshot.empty && defaultItems.length > 0) {
-      // Seed default items if collection is empty
-      defaultItems.forEach((item) => {
-        setDoc(doc(db, collectionName, item.id), item).catch((err) =>
-          console.error(`Error seeding ${collectionName}:`, err)
-        );
-      });
-      onData(defaultItems);
+    if (snapshot.empty) {
+      if (defaultItems && defaultItems.length > 0 && !seeded) {
+        seeded = true;
+        // Seed default items if collection is empty
+        defaultItems.forEach((item) => {
+          if (item && item.id) {
+            setDoc(doc(db, collectionName, item.id), item, { merge: true }).catch((err) =>
+              console.error(`Error seeding ${collectionName}:`, err)
+            );
+          }
+        });
+        onData(defaultItems);
+      }
     } else {
       const items: T[] = [];
       snapshot.forEach((docSnap) => {
