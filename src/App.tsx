@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Member, 
   Club, 
@@ -91,7 +91,20 @@ export default function App() {
 
   const [employees, setEmployees] = useState<Employee[]>(() => {
     const saved = localStorage.getItem('kl_employees');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    const backup = localStorage.getItem('kl_employees_backup_latest') || localStorage.getItem('kl_employees_backup');
+    if (backup) {
+      try {
+        const parsed = JSON.parse(backup);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return [];
   });
 
   const [documents, setDocuments] = useState<ArchivalDocument[]>(() => {
@@ -214,6 +227,9 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('kl_employees', JSON.stringify(employees));
+    if (employees.length > 0) {
+      localStorage.setItem('kl_employees_backup_latest', JSON.stringify(employees));
+    }
   }, [employees]);
 
   useEffect(() => {
@@ -228,16 +244,22 @@ export default function App() {
     localStorage.setItem('kl_user_role', currentUserRole);
   }, [currentUserRole]);
 
+  const isInitialServerDataLoaded = useRef(false);
+
   // Initial fetch full application data from backend server
   useEffect(() => {
     fetch('/api/app-data')
       .then(res => res.json())
       .then(res => {
         if (res.success && res.data) {
-          handleRestoreDatabase(res.data);
+          handleRestoreDatabase(res.data, false);
         }
+        isInitialServerDataLoaded.current = true;
       })
-      .catch(err => console.log('Error fetching app data:', err));
+      .catch(err => {
+        console.log('Error fetching app data:', err);
+        isInitialServerDataLoaded.current = true;
+      });
 
     fetch('/api/accounts')
       .then(res => res.json())
@@ -252,6 +274,8 @@ export default function App() {
 
   // Sync state to backend server for persistence across browsers
   useEffect(() => {
+    if (!isInitialServerDataLoaded.current) return;
+
     const appData = {
       members,
       clubs,
@@ -399,21 +423,63 @@ export default function App() {
   }, [auditLogs]);
 
   // BULK DATABASE BACKUP COMPACTION & RESTORE HANDLER
-  const handleRestoreDatabase = (data: any) => {
+  const handleRestoreDatabase = (data: any, forceOverwriteEmpty = false) => {
     if (!data) return;
-    if (Array.isArray(data.members)) { setMembers(data.members); syncCollection('members', data.members); }
-    if (Array.isArray(data.clubs)) { setClubs(data.clubs); syncCollection('clubs', data.clubs); }
-    if (Array.isArray(data.leagues)) { setLeagues(data.leagues); syncCollection('leagues', data.leagues); }
-    if (Array.isArray(data.positions)) { setPositions(data.positions); syncCollection('positions', data.positions); }
-    if (Array.isArray(data.meetings)) { setMeetings(data.meetings); syncCollection('meetings', data.meetings); }
-    if (Array.isArray(data.activities)) { setActivities(data.activities); syncCollection('activities', data.activities); }
-    if (Array.isArray(data.contributions)) { setContributions(data.contributions); syncCollection('contributions', data.contributions); }
-    if (Array.isArray(data.journalEntries)) { setJournalEntries(data.journalEntries); syncCollection('journals', data.journalEntries); }
-    if (Array.isArray(data.employees)) { setEmployees(data.employees); syncCollection('employees', data.employees); }
-    if (Array.isArray(data.documents)) { setDocuments(data.documents); syncCollection('documents', data.documents); }
-    if (Array.isArray(data.alerts)) { setAlerts(data.alerts); syncCollection('alerts', data.alerts); }
-    if (Array.isArray(data.accessAccounts)) { setAccessAccounts(data.accessAccounts); syncCollection('accounts', data.accessAccounts); }
-    if (Array.isArray(data.auditLogs)) { setAuditLogs(data.auditLogs); syncCollection('auditLogs', data.auditLogs); }
+    if (Array.isArray(data.members) && (data.members.length > 0 || forceOverwriteEmpty)) {
+      setMembers(data.members);
+      syncCollection('members', data.members);
+    }
+    if (Array.isArray(data.clubs) && (data.clubs.length > 0 || forceOverwriteEmpty)) {
+      setClubs(data.clubs);
+      syncCollection('clubs', data.clubs);
+    }
+    if (Array.isArray(data.leagues) && (data.leagues.length > 0 || forceOverwriteEmpty)) {
+      setLeagues(data.leagues);
+      syncCollection('leagues', data.leagues);
+    }
+    if (Array.isArray(data.positions) && (data.positions.length > 0 || forceOverwriteEmpty)) {
+      setPositions(data.positions);
+      syncCollection('positions', data.positions);
+    }
+    if (Array.isArray(data.meetings) && (data.meetings.length > 0 || forceOverwriteEmpty)) {
+      setMeetings(data.meetings);
+      syncCollection('meetings', data.meetings);
+    }
+    if (Array.isArray(data.activities) && (data.activities.length > 0 || forceOverwriteEmpty)) {
+      setActivities(data.activities);
+      syncCollection('activities', data.activities);
+    }
+    if (Array.isArray(data.contributions) && (data.contributions.length > 0 || forceOverwriteEmpty)) {
+      setContributions(data.contributions);
+      syncCollection('contributions', data.contributions);
+    }
+    if (Array.isArray(data.journalEntries) && (data.journalEntries.length > 0 || forceOverwriteEmpty)) {
+      setJournalEntries(data.journalEntries);
+      syncCollection('journals', data.journalEntries);
+    }
+    if (Array.isArray(data.employees) && (data.employees.length > 0 || forceOverwriteEmpty)) {
+      setEmployees(data.employees);
+      syncCollection('employees', data.employees);
+      if (data.employees.length > 0) {
+        localStorage.setItem('kl_employees_backup_latest', JSON.stringify(data.employees));
+      }
+    }
+    if (Array.isArray(data.documents) && (data.documents.length > 0 || forceOverwriteEmpty)) {
+      setDocuments(data.documents);
+      syncCollection('documents', data.documents);
+    }
+    if (Array.isArray(data.alerts) && (data.alerts.length > 0 || forceOverwriteEmpty)) {
+      setAlerts(data.alerts);
+      syncCollection('alerts', data.alerts);
+    }
+    if (Array.isArray(data.accessAccounts) && (data.accessAccounts.length > 0 || forceOverwriteEmpty)) {
+      setAccessAccounts(data.accessAccounts);
+      syncCollection('accounts', data.accessAccounts);
+    }
+    if (Array.isArray(data.auditLogs) && (data.auditLogs.length > 0 || forceOverwriteEmpty)) {
+      setAuditLogs(data.auditLogs);
+      syncCollection('auditLogs', data.auditLogs);
+    }
     
     if (typeof data.initialLiquidity === 'number') setInitialLiquidity(data.initialLiquidity);
     if (typeof data.useManualLiquidity === 'boolean') setUseManualLiquidity(data.useManualLiquidity);
@@ -1007,6 +1073,8 @@ export default function App() {
             employees={employees}
             addEmployee={addEmployee}
             deleteEmployee={deleteEmployee}
+            setEmployees={setEmployees}
+            onRestoreDatabase={handleRestoreDatabase}
             isDarkMode={isDarkMode}
             currentUserRole={currentUserRole}
           />

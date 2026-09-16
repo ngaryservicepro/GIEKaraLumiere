@@ -1,0 +1,108 @@
+{
+  "members": [],
+  "clubs": [],
+  "leagues": [],
+  "positions": [],
+  "meetings": [],
+  "activities": [],
+  "contributions": [],
+  "journalEntries": [],
+  "employees": [
+    {
+      "id": "EMP-001",
+      "fullName": "Seynabou Ndiaye",
+      "position": "Assistant Secrétaire Générale",
+      "contractType": "Prestataire",
+      "startDate": "2025-01-05",
+      "salary": 180000,
+      "email": "seynabou@karalumier.sn",
+      "phone": "+221 77 452 10 10"
+    },
+    {
+      "id": "EMP-002",
+      "fullName": "Fallou Fall",
+      "position": "Régisseur principal d'instruments",
+      "contractType": "Bénévole",
+      "startDate": "2025-03-20",
+      "salary": 120500,
+      "email": "fallou.fall@karalumier.sn",
+      "phone": "+221 77 821 00 22"
+    },
+    {
+      "id": "EMP-003",
+      "fullName": "Moussa Diouf",
+      "position": "Coordinateur des Répétitions & Logistique",
+      "contractType": "Prestataire",
+      "startDate": "2025-02-10",
+      "salary": 150000,
+      "email": "moussa.diouf@karalumiere.sn",
+      "phone": "+221 78 312 44 55"
+    },
+    {
+      "id": "EMP-004",
+      "fullName": "Aminata Sall",
+      "position": "Chargée de la Communication Digitale",
+      "contractType": "Bénévole",
+      "startDate": "2025-04-01",
+      "salary": 75000,
+      "email": "aminata.sall@karalumiere.sn",
+      "phone": "+221 76 541 23 89"
+    }
+  ],
+  "documents": [],
+  "alerts": [],
+  "accessAccounts": [
+    {
+      "id": "ACC-001",
+      "email": "ngaryservicepro@gmail.com",
+      "fullName": "Aliou Cissé",
+      "password": "admin",
+      "role": "Super Administrateur",
+      "status": "Actif"
+    },
+    {
+      "id": "ACC-002",
+      "fullName": "Racine Sy",
+      "email": "racinesy1990@gmail.com",
+      "role": "Membre",
+      "password": "123456789@",
+      "status": "Actif"
+    },
+    {
+      "id": "ACC-003",
+      "fullName": "Souleymane Faye",
+      "email": "president@karalumiere.sn",
+      "role": "Président",
+      "password": "pres",
+      "status": "Actif"
+    },
+    {
+      "id": "ACC-004",
+      "fullName": "Babacar Ndiaye",
+      "email": "sg@karalumiere.sn",
+      "role": "Secrétaire Général",
+      "password": "sg",
+      "status": "Actif"
+    },
+    {
+      "id": "ACC-005",
+      "fullName": "Fatou Diome",
+      "email": "musique@karalumiere.sn",
+      "role": "Responsable Musicale",
+      "password": "musique",
+      "status": "Actif"
+    },
+    {
+      "id": "ACC-006",
+      "fullName": "Seynabou Ndiaye",
+      "email": "seynabou@karalumiere.sn",
+      "role": "Membre",
+      "password": "membre",
+      "status": "Actif"
+    }
+  ],
+  "auditLogs": [],
+  "initialLiquidity": 2500000,
+  "useManualLiquidity": false,
+  "manualLiquidity": 2500000
+}

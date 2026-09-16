@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.5
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Briefcase, 
@@ -13,7 +13,15 @@ import {
   Wrench, 
   Trash2, 
   ShieldAlert,
-  X
+  X,
+  History,
+  RotateCcw,
+  Download,
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+  Database,
+  HelpCircle
 } from 'lucide-react';
 import { Employee } from '../types';
 import { 
@@ -27,22 +35,40 @@ interface HumanResourcesViewProps {
   employees: Employee[];
   addEmployee: (emp: Omit<Employee, 'id'>) => void;
   deleteEmployee: (id: string) => void;
+  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   isDarkMode: boolean;
   currentUserRole: string;
+  onRestoreDatabase?: (data: any, forceOverwriteEmpty?: boolean) => void;
 }
 
 type DocType = 'contrat' | 'mad' | 'charte' | 'confidentialite';
+
+interface ServerBackupItem {
+  filename: string;
+  size: number;
+  date: string;
+  employeeCount: number;
+  memberCount: number;
+  clubCount: number;
+}
 
 export default function HumanResourcesView({
   employees,
   addEmployee,
   deleteEmployee,
+  setEmployees,
   isDarkMode,
-  currentUserRole
+  currentUserRole,
+  onRestoreDatabase
 }: HumanResourcesViewProps) {
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [serverBackups, setServerBackups] = useState<ServerBackupItem[]>([]);
+  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [cachedEmployeesFound, setCachedEmployeesFound] = useState<Employee[] | null>(null);
   
   // Document generation helper states
   const [activeGenDocType, setActiveGenDocType] = useState<DocType | null>(null);
@@ -56,6 +82,155 @@ export default function HumanResourcesView({
   const [salary, setSalary] = useState<number>(0);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+
+  // Check local cache on mount
+  useEffect(() => {
+    checkLocalCache();
+  }, []);
+
+  const checkLocalCache = () => {
+    try {
+      const keys = ['kl_employees_backup_latest', 'kl_employees_backup', 'kl_employees'];
+      for (const k of keys) {
+        const val = localStorage.getItem(k);
+        if (val) {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCachedEmployeesFound(parsed);
+            return;
+          }
+        }
+      }
+    } catch {}
+    setCachedEmployeesFound(null);
+  };
+
+  const fetchServerBackups = async () => {
+    setIsLoadingBackups(true);
+    try {
+      const res = await fetch('/api/app-data/backups');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.backups)) {
+        setServerBackups(data.backups);
+      }
+    } catch (err) {
+      console.error('Error fetching backups:', err);
+    } finally {
+      setIsLoadingBackups(false);
+    }
+  };
+
+  const openRecoveryModal = () => {
+    checkLocalCache();
+    fetchServerBackups();
+    setShowRecoveryModal(true);
+    setRecoveryMessage(null);
+  };
+
+  const handleRestoreLocalCache = () => {
+    if (cachedEmployeesFound && cachedEmployeesFound.length > 0) {
+      setEmployees(cachedEmployeesFound);
+      localStorage.setItem('kl_employees', JSON.stringify(cachedEmployeesFound));
+      localStorage.setItem('kl_employees_backup_latest', JSON.stringify(cachedEmployeesFound));
+      setRecoveryMessage({
+        type: 'success',
+        text: `${cachedEmployeesFound.length} collaborateur(s) récupéré(s) avec succès depuis le stockage local !`
+      });
+    }
+  };
+
+  const handleRestoreServerBackup = async (filename: string) => {
+    try {
+      const res = await fetch('/api/app-data/restore-backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        if (onRestoreDatabase) {
+          onRestoreDatabase(data.data, true);
+        } else if (Array.isArray(data.data.employees)) {
+          setEmployees(data.data.employees);
+        }
+        setRecoveryMessage({
+          type: 'success',
+          text: `Sauvegarde "${filename}" restaurée avec succès !`
+        });
+      } else {
+        setRecoveryMessage({ type: 'error', text: data.error || 'Erreur lors de la restauration.' });
+      }
+    } catch (err: any) {
+      setRecoveryMessage({ type: 'error', text: err.message || 'Erreur réseau.' });
+    }
+  };
+
+  const handleRestoreReferenceTeam = async () => {
+    try {
+      const res = await fetch('/api/app-data/restore-demo-employees', { method: 'POST' });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.employees)) {
+        setEmployees(data.employees);
+        localStorage.setItem('kl_employees', JSON.stringify(data.employees));
+        localStorage.setItem('kl_employees_backup_latest', JSON.stringify(data.employees));
+        setRecoveryMessage({
+          type: 'success',
+          text: 'Équipe de référence restaurée avec succès (Seynabou Ndiaye, Fallou Fall, etc.) !'
+        });
+      }
+    } catch (err: any) {
+      setRecoveryMessage({ type: 'error', text: err.message || 'Erreur réseau.' });
+    }
+  };
+
+  const handleJsonImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        let importedList: Employee[] = [];
+
+        if (Array.isArray(json)) {
+          importedList = json;
+        } else if (Array.isArray(json.employees)) {
+          importedList = json.employees;
+          if (onRestoreDatabase) {
+            onRestoreDatabase(json, true);
+          }
+        } else {
+          throw new Error("Fichier invalide : aucune liste de collaborateurs trouvée.");
+        }
+
+        if (importedList.length > 0) {
+          setEmployees(importedList);
+          localStorage.setItem('kl_employees', JSON.stringify(importedList));
+          localStorage.setItem('kl_employees_backup_latest', JSON.stringify(importedList));
+          setRecoveryMessage({
+            type: 'success',
+            text: `${importedList.length} collaborateur(s) importé(s) avec succès depuis le fichier JSON !`
+          });
+        } else {
+          setRecoveryMessage({ type: 'error', text: "Le fichier ne contient aucun collaborateur." });
+        }
+      } catch (err: any) {
+        setRecoveryMessage({ type: 'error', text: err.message || "Erreur de lecture du fichier JSON." });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExportStaffJson = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(employees, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `gie_kara_lumiere_collaborateurs_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   const resetForm = () => {
     setFullName('');
@@ -129,16 +304,65 @@ export default function HumanResourcesView({
             Gestion des bénévoles, stagiaires, intervenants et prestataires de services du groupement. Édition de contrats d'honoraires, d'engagements de confidentialité et de fiches d'indemnisation.
           </p>
         </div>
-        {canModify && !showAddForm && (
+        
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
-            id="btn-add-employee"
+            onClick={openRecoveryModal}
+            className="px-3 py-2 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 cursor-pointer shadow-sm"
+            id="btn-rh-recovery"
+            title="Consulter l'historique des sauvegardes et restaurer les données"
           >
-            <Plus className="w-4 h-4" /> Enregistrer un Collaborateur
+            <History className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>Sauvegardes & Restauration</span>
           </button>
-        )}
+
+          {employees.length > 0 && (
+            <button
+              onClick={handleExportStaffJson}
+              className="px-3 py-2 rounded-lg font-medium text-xs flex items-center gap-1.5 transition-colors border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-850 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer shadow-sm"
+              id="btn-export-staff-json"
+              title="Exporter les collaborateurs en fichier JSON"
+            >
+              <Download className="w-3.5 h-3.5 text-gray-500" />
+              <span>Exporter (JSON)</span>
+            </button>
+          )}
+
+          {canModify && !showAddForm && (
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-[#22B8A7] hover:bg-[#1fa192] text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+              id="btn-add-employee"
+            >
+              <Plus className="w-4 h-4" /> Enregistrer un Collaborateur
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Recovery notification message if any */}
+      {recoveryMessage && (
+        <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+          recoveryMessage.type === 'success' 
+            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/60 text-emerald-900 dark:text-emerald-100' 
+            : 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700/60 text-rose-900 dark:text-rose-100'
+        }`}>
+          <div className="flex items-center gap-2.5 text-sm">
+            {recoveryMessage.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+            )}
+            <span>{recoveryMessage.text}</span>
+          </div>
+          <button 
+            onClick={() => setRecoveryMessage(null)}
+            className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* GIE Statutory warning notice */}
       <div className="bg-[#173C4A]/10 border border-[#173C4A]/20 p-4 rounded-xl flex items-start gap-3">
@@ -287,8 +511,79 @@ export default function HumanResourcesView({
         {/* EMPLOYEES INDEX CARD */}
         <div className="lg:col-span-2 space-y-4">
           {employees.length === 0 ? (
-            <div className={`p-8 border rounded-xl text-center ${cardBgClass} text-gray-500`}>
-              Aucun bénévole, prestataire ou personnel mis à disposition enregistré. Utilisez le bouton ci-dessus pour ajouter des fiches.
+            <div className={`p-6 border rounded-xl ${cardBgClass} space-y-5`}>
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className={`text-base font-bold ${headingClass}`}>
+                    Aucun collaborateur ou données non affichées
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Si vous venez de changer de navigateur ou de vider le cache, vos données peuvent être récupérées via nos outils de restauration ci-dessous.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action recovery buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {cachedEmployeesFound && cachedEmployeesFound.length > 0 && (
+                  <button
+                    onClick={handleRestoreLocalCache}
+                    className="p-3 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4 text-emerald-600" />
+                    <span>Restaurer le cache local ({cachedEmployeesFound.length} trouvés)</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={openRecoveryModal}
+                  className="p-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer"
+                >
+                  <History className="w-4 h-4 text-amber-600" />
+                  <span>Vérifier les Sauvegardes Serveur</span>
+                </button>
+
+                <label className="p-3 rounded-lg border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/30 text-teal-800 dark:text-teal-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer text-center">
+                  <Upload className="w-4 h-4 text-teal-600" />
+                  <span>Importer une Sauvegarde JSON</span>
+                  <input 
+                    type="file" 
+                    accept=".json" 
+                    onChange={handleJsonImport} 
+                    className="hidden" 
+                  />
+                </label>
+
+                <button
+                  onClick={handleRestoreReferenceTeam}
+                  className="p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors cursor-pointer"
+                >
+                  <Users className="w-4 h-4 text-[#22B8A7]" />
+                  <span>Restaurer l'Équipe Type (4 fiches)</span>
+                </button>
+              </div>
+
+              {/* Multi-browser guidance box */}
+              <div className="bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 p-4 rounded-xl space-y-2 text-xs text-sky-900 dark:text-sky-200">
+                <div className="flex items-center gap-2 font-bold text-sky-800 dark:text-sky-300">
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Vous avez saisi vos données dans un autre navigateur ?</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-sky-850 dark:text-sky-300">
+                  Lorsque vous changez de navigateur (ex: Chrome, Edge, Firefox, Safari ou fenêtre privée), chaque navigateur stocke initialement son propre cache local.
+                </p>
+                <div className="text-[11px] leading-relaxed space-y-1 bg-white/60 dark:bg-black/20 p-2.5 rounded-lg border border-sky-200/50 dark:border-sky-800/40">
+                  <p className="font-semibold">Pour transférer vos données saisies :</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-sky-900 dark:text-sky-200">
+                    <li>Ouvrez le premier navigateur ou appareil où vous aviez saisi vos collaborateurs.</li>
+                    <li>Allez dans <strong>Sécurité</strong> ou <strong>Ressources Humaines</strong> et cliquez sur <strong>Exporter (JSON)</strong>.</li>
+                    <li>Sur ce nouveau navigateur, cliquez sur <strong>Importer une Sauvegarde JSON</strong> ci-dessus pour tout synchroniser immédiatement !</li>
+                  </ol>
+                </div>
+              </div>
             </div>
           ) : (
             employees.map(emp => (
@@ -397,6 +692,185 @@ export default function HumanResourcesView({
             </div>
           )}
         </div>
+
+      {/* RECOVERY AND BACKUP MODAL */}
+      {showRecoveryModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border ${cardBgClass} shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150`}>
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-[#22B8A7]/10 text-[#22B8A7]">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className={`font-bold text-base ${headingClass}`}>Centre de Récupération & Historique</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Restauration des données RH et des collaborateurs</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowRecoveryModal(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Server Backups Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${headingClass} flex items-center gap-1.5`}>
+                  <History className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Points de restauration sur le serveur</span>
+                </h4>
+                <button
+                  onClick={fetchServerBackups}
+                  className="text-[11px] text-[#22B8A7] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" /> Actualiser
+                </button>
+              </div>
+
+              {isLoadingBackups ? (
+                <div className="p-6 text-center text-xs text-gray-500">Chargement des sauvegardes...</div>
+              ) : serverBackups.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500">
+                  Aucun point de sauvegarde automatique n'est encore enregistré sur le serveur.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {serverBackups.map((b, idx) => (
+                    <div 
+                      key={b.filename}
+                      className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[#22B8A7] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold">{new Date(b.date).toLocaleString('fr-FR')}</span>
+                          {idx === 0 && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                              Dernière
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
+                          <span>👤 {b.employeeCount} collaborateur(s)</span>
+                          <span>•</span>
+                          <span>🏢 {b.clubCount} club(s)</span>
+                          <span>•</span>
+                          <span>{(b.size / 1024).toFixed(1)} Ko</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (confirm(`Restaurer cette sauvegarde du ${new Date(b.date).toLocaleString('fr-FR')} ?`)) {
+                            handleRestoreServerBackup(b.filename);
+                            setShowRecoveryModal(false);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded text-xs font-semibold bg-[#22B8A7] text-white hover:bg-[#1fa192] transition-colors cursor-pointer self-start sm:self-center"
+                      >
+                        Restaurer
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Local Storage Restore */}
+              <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold">
+                  <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Mémoire locale du navigateur</span>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  {cachedEmployeesFound && cachedEmployeesFound.length > 0
+                    ? `${cachedEmployeesFound.length} collaborateur(s) en mémoire.`
+                    : "Aucune donnée RH trouvée en mémoire dans ce navigateur."}
+                </p>
+                {cachedEmployeesFound && cachedEmployeesFound.length > 0 && (
+                  <button
+                    onClick={() => {
+                      handleRestoreLocalCache();
+                      setShowRecoveryModal(false);
+                    }}
+                    className="w-full py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Restaurer le cache local
+                  </button>
+                )}
+              </div>
+
+              {/* JSON File Import */}
+              <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold">
+                  <Upload className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Importer un fichier JSON</span>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  Importez un fichier de sauvegarde exporté depuis un autre navigateur.
+                </p>
+                <label className="w-full py-1.5 rounded bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition-colors cursor-pointer block text-center">
+                  Sélectionner le fichier
+                  <input 
+                    type="file" 
+                    accept=".json" 
+                    onChange={(e) => {
+                      handleJsonImport(e);
+                      setShowRecoveryModal(false);
+                    }} 
+                    className="hidden" 
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Reference Team Restore */}
+            <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold">Restaurer l'Équipe Type (Modèle GIE Kara)</div>
+                <div className="text-[11px] text-gray-500">
+                  Réinitialise 4 intervenants de référence (Seynabou Ndiaye, Fallou Fall, Moussa Diouf, Aminata Sall).
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (confirm("Restaurer les 4 collaborateurs de référence ?")) {
+                    handleRestoreReferenceTeam();
+                    setShowRecoveryModal(false);
+                  }
+                }}
+                className="px-3 py-1.5 rounded bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold shrink-0 cursor-pointer"
+              >
+                Restaurer l'équipe
+              </button>
+            </div>
+
+            {/* Browser Guide Advice */}
+            <div className="bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 p-3.5 rounded-xl text-xs text-sky-900 dark:text-sky-200 space-y-1.5">
+              <div className="font-bold flex items-center gap-1.5 text-sky-800 dark:text-sky-300">
+                <HelpCircle className="w-4 h-4" />
+                <span>Où se trouvaient vos données saisies ?</span>
+              </div>
+              <p className="text-[11px] leading-relaxed">
+                Si vous avez saisi des informations dans un autre navigateur (ex: Chrome, Safari, Edge ou mobile), chaque navigateur isole ses données locales. Pour les récupérer, ouvrez ce premier navigateur, cliquez sur <strong>Exporter (JSON)</strong>, puis importez ce fichier ici. Une fois importées, les données sont désormais également sauvegardées sur le serveur central.
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowRecoveryModal(false)}
+                className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold hover:bg-gray-300 dark:hover:bg-gray-650 cursor-pointer"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>
